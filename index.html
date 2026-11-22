@@ -2,7 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="IV Ledger">
 <title>Industrial Visit Ledger</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230d2b3e'/%3E%3Cpath d='M18 38a14 14 0 0 1 28 0z' fill='%23f2a33a'/%3E%3Cpath d='M8 44q6-5 12 0t12 0 12 0 12 0' stroke='%233fb5c2' stroke-width='3.5' fill='none' stroke-linecap='round'/%3E%3Cpath d='M8 52q6-5 12 0t12 0 12 0 12 0' stroke='%230f7c8a' stroke-width='3.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
 <meta name="theme-color" content="#0d2b3e">
@@ -45,7 +50,7 @@ a.ghost{color:var(--ink)}
 .lbox h1{font-size:30px;line-height:1.1;margin-bottom:6px}
 .lbox p{color:var(--mut);margin-bottom:22px}
 label{display:flex;flex-direction:column;gap:5px;font-weight:600;font-size:13px;color:var(--mut);margin-bottom:14px}
-input,select,textarea{border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;font-weight:500;color:var(--ink);width:100%}
+input,select,textarea{font-size:16px;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;font-weight:500;color:var(--ink);width:100%}
 input:focus,select:focus,textarea:focus{border-color:var(--sea);outline:none}
 .pri{background:var(--sea);color:#fff;border:0;border-radius:10px;padding:11px 18px;font-weight:700}
 .pri:hover{background:#0b6a76}.pri:disabled{opacity:.6}
@@ -117,6 +122,35 @@ tr.k{cursor:pointer}tr.k:hover td{background:#f6fafb}
  .mob{display:inline-block!important}
 }
 .mob{display:none}
+/* phone layout */
+body{-webkit-tap-highlight-color:transparent;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+.k3{grid-template-columns:repeat(3,1fr)}
+.qrw{display:block}
+@media(max-width:860px){
+ aside{padding-bottom:calc(6px + env(safe-area-inset-bottom));scrollbar-width:none;box-shadow:0 -4px 18px rgba(0,0,0,.18)}
+ aside::-webkit-scrollbar{display:none}
+ main{padding-bottom:calc(92px + env(safe-area-inset-bottom))}
+ .fab{bottom:calc(80px + env(safe-area-inset-bottom))}
+ button,.pri,.ghost,.danger{min-height:42px}
+ .tools input,.tools select{max-width:none;flex:1 1 140px}
+ #actions{width:100%}#actions>*{flex:1 1 auto}
+ .k3 .num{font-size:19px}.kpi{padding:12px 14px}.kpi .num{font-size:23px}
+ .qrw{display:none}.qrw.on{display:block}
+ .card{padding:16px}
+}
+@media(max-width:700px){
+ #modal{place-items:end center;padding:0}
+ .sheet{max-width:100%;border-radius:18px 18px 0 0;max-height:90vh;padding:20px 18px calc(20px + env(safe-area-inset-bottom))}
+ .tw{border:0;background:none;overflow:visible}
+ table,thead,tbody,tr,td{display:block}
+ thead{display:none}
+ tr{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:10px;padding:8px 12px}
+ td{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:5px 0!important;border:0!important;text-align:right;background:none!important}
+ td::before{content:attr(data-l);color:var(--mut);font-weight:600;font-size:12.5px;text-align:left;flex:none}
+ td[data-l='']::before{content:none}
+ td[colspan]{display:block;text-align:center}td[colspan]::before{content:none}
+ tr.k:active{background:var(--foam)}
+}
 @media print{aside,#actions,.tools,#modal{display:none!important}#app{display:block}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -137,6 +171,7 @@ tr.k{cursor:pointer}tr.k:hover td{background:#f6fafb}
   <label>Password<input id="lp" type="password" autocomplete="current-password" required></label>
   <div class="err" id="le"></div>
   <button class="pri">Sign in</button>
+  <button type="button" class="ghost" id="instl" data-act="install" style="width:100%;margin-top:10px">Install on this phone</button>
  </form>
 </div>
 <div id="app" hidden>
@@ -157,6 +192,8 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const inr=n=>'₹'+Math.round(Number(n)||0).toLocaleString('en-IN');
 const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+const lbl=()=>document.querySelectorAll('#view table').forEach(t=>{const h=[...t.querySelectorAll('thead th')].map(x=>x.textContent.trim());t.querySelectorAll('tbody tr').forEach(r=>[...r.children].forEach((c,i)=>{if(!c.hasAttribute('colspan'))c.dataset.l=h[i]||''}))});
+let DP=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();DP=e});
 const sum=a=>a.reduce((t,x)=>t+Number(x.amount||0),0);
 const psum=a=>a.reduce((t,x)=>t+(x.kind==='refund'?-1:1)*Number(x.amount||0),0);
 const L=(c,g,s)=>s.split('|').map(n=>({name:n.trim(),class:c,gender:g,type:'Student'}));
@@ -218,7 +255,7 @@ function draw(){
  const pend=(S.d.claims||[]).filter(c=>c.status==='Pending').length;
  $('#nav').innerHTML=(S.u.role==='student'?[['me','My payments'],['set','Password']]:PAGES.filter(p=>can(p[2]))).map(p=>`<button data-go="${p[0]}" class="${S.page===p[0]?'on':''}">${p[1]}${p[0]==='claims'&&pend?` (${pend})`:''}</button>`).join('');
  const pg=VIEWS[S.page]();
- $('#fab').hidden=!can(1);$('#pt').textContent=pg.title;$('#actions').innerHTML=pg.actions||'';$('#view').innerHTML=pg.html;S.rf=pg.rf||null;if(S.u.role==='student'&&S.page==='me')updPay();
+ $('#fab').hidden=!can(1);$('#pt').textContent=pg.title;$('#actions').innerHTML=pg.actions||'';$('#view').innerHTML=pg.html;S.rf=pg.rf||null;if(S.u.role==='student'&&S.page==='me')updPay();lbl();
 }
 function sheet(html){const m=$('#modal');m.innerHTML=`<div class="sheet">${html}</div>`;m.classList.add('on')}
 function close(){if(S.lock)return;$('#modal').classList.remove('on')}
@@ -320,9 +357,9 @@ claims(){const c=[...(S.d.claims||[])].sort((a,b)=>(a.status==='Pending'?0:1)-(b
  return{title:'Verify payments',html:`<p class="mut" style="margin-bottom:12px">Students submit these after paying by UPI. Check the amount in your UPI app or bank, then approve it to add it to Payments.</p><div class="tw"><table><thead><tr><th>Submitted</th><th>Student</th><th class="r">Amount</th><th>UPI reference</th><th>Status</th></tr></thead><tbody>${c.map(x=>`<tr ${x.status==='Pending'&&can(1)?`class="k" data-act="claim" data-id="${x.id}"`:''}><td>${esc(x.created)}</td><td><b>${esc(pName(x.participantId))}</b></td><td class="r">${inr(x.amount)}</td><td>${esc(x.ref)}</td><td><span class="chip ${x.status==='Approved'?'c-ok':x.status==='Rejected'?'c-no':'c-part'}">${esc(x.status)}</span></td></tr>`).join('')||'<tr><td colspan="5" class="empty">No student payments submitted yet.</td></tr>'}</tbody></table></div>`}},
 
 me(){const d=S.d,p=d.me,c=d.config,f=feeOf(p),x=paidBy(p.id),due=Math.max(f-x,0),pend=d.claims.filter(k=>k.status==='Pending').reduce((a,k)=>a+Number(k.amount),0);
- const pay=!c.upiId?'<p class="mut">Online payment is not set up yet. Please ask the organiser.</p>':due<=0?'<p style="color:var(--ok);font-weight:700">Fully paid. Thank you!</p>':`<div class="tools" style="margin-bottom:6px"><input id="pa" type="number" min="1" max="${due}" step="any" inputmode="decimal" value="${due}" style="max-width:170px"><button class="ghost" data-act="pay-full">Pay full ${inr(due)}</button></div><p class="mut" style="margin-bottom:12px">Change the amount to pay only a part now.</p><div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center"><div id="qr" style="background:#fff;padding:8px;border:1px solid var(--line);border-radius:10px;min-width:60px;min-height:60px"></div><div style="display:flex;flex-direction:column;gap:10px"><a class="pri" id="gp" style="text-decoration:none;text-align:center">Open Google Pay</a><a class="ghost" id="up" style="text-decoration:none;text-align:center">Other UPI app</a><small class="mut">Or scan the QR with any UPI app.<br>Paying to ${esc(c.upiName||c.upiId)}</small></div></div><h3 style="margin:22px 0 8px">After paying</h3><div class="tools"><input id="pr" placeholder="UPI transaction ID" style="max-width:260px"><button class="pri" data-act="claim-send">I have paid</button></div><small class="mut">The organiser verifies it, then it appears in your history as received.</small>`;
+ const pay=!c.upiId?'<p class="mut">Online payment is not set up yet. Please ask the organiser.</p>':due<=0?'<p style="color:var(--ok);font-weight:700">Fully paid. Thank you!</p>':`<div class="tools" style="margin-bottom:6px"><input id="pa" type="number" min="1" max="${due}" step="any" inputmode="decimal" value="${due}" style="max-width:170px"><button class="ghost" data-act="pay-full">Pay full ${inr(due)}</button></div><p class="mut" style="margin-bottom:12px">Change the amount to pay only a part now.</p><div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center"><div class="qrw"><div id="qr" style="background:#fff;padding:8px;border:1px solid var(--line);border-radius:10px;min-width:60px;min-height:60px"></div></div><div style="display:flex;flex-direction:column;gap:10px"><a class="pri" id="gp" style="text-decoration:none;text-align:center">Open Google Pay</a><a class="ghost" id="up" style="text-decoration:none;text-align:center">Other UPI app</a><button class="ghost mob" data-act="qr-toggle">Show QR code</button><small class="mut">Or scan the QR with any UPI app.<br>Paying to ${esc(c.upiName||c.upiId)}</small></div></div><h3 style="margin:22px 0 8px">After paying</h3><div class="tools"><input id="pr" placeholder="UPI transaction ID" style="max-width:260px"><button class="pri" data-act="claim-send">I have paid</button></div><small class="mut">The organiser verifies it, then it appears in your history as received.</small>`;
  const hist=[...d.payments.map(y=>({d:y.date,a:(y.kind==='refund'?'Refund −':'')+inr(y.amount),s:'Received',k:'c-ok'})),...d.claims.filter(k=>k.status!=='Approved').map(k=>({d:k.date,a:inr(k.amount),s:k.status,k:k.status==='Rejected'?'c-no':'c-part'}))].sort((a,b)=>String(b.d).localeCompare(String(a.d)));
- return{title:'My payments',html:`<div class="kpis" style="grid-template-columns:repeat(3,1fr)"><div class="kpi"><small>Your fee</small><div class="num">${inr(f)}</div></div><div class="kpi"><small>Paid</small><div class="num">${inr(x)}</div>${pend?`<em>${inr(pend)} awaiting verification</em>`:''}</div><div class="kpi"><small>Balance</small><div class="num" style="color:${due>0?'var(--bad)':'var(--ok)'}">${inr(due)}</div></div></div>
+ return{title:'My payments',html:`<div class="kpis k3"><div class="kpi"><small>Your fee</small><div class="num">${inr(f)}</div></div><div class="kpi"><small>Paid</small><div class="num">${inr(x)}</div>${pend?`<em>${inr(pend)} awaiting verification</em>`:''}</div><div class="kpi"><small>Balance</small><div class="num" style="color:${due>0?'var(--bad)':'var(--ok)'}">${inr(due)}</div></div></div>
  ${d.breakup.length?`<div class="card" style="margin-bottom:16px"><h3>Where your ${inr(f)} goes</h3>${d.breakup.map(b=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #edf2f5"><span>${esc(b.c)}</span><b>${inr(b.a)}</b></div>`).join('')}<small class="mut" style="display:block;margin-top:8px">Approximate split of your fee across trip costs.</small></div>`:''}
  <div class="card" style="margin-bottom:16px"><h3>Pay now</h3>${pay}</div>
  <div class="card"><h3>History</h3>${hist.map(r=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-top:1px solid #edf2f5"><span>${r.d}</span><span><b>${r.a}</b> <span class="chip ${r.k}">${r.s}</span></span></div>`).join('')||'<p class="mut">No payments yet.</p>'}</div>`}},
@@ -332,7 +369,7 @@ log(){return{title:'Activity log',html:`<div class="tw"><table><thead><tr><th>Wh
 team(){return{title:'Team',actions:'<button class="ghost" data-act="mk-stu">Create student logins</button><button class="pri" data-act="add-user">Create account</button>',html:`<div class="tw"><table><thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Status</th><th></th></tr></thead><tbody>${[...S.d.users].sort((a,b)=>(a.role==='student')-(b.role==='student')).map(u=>`<tr><td><b>${esc(u.name)}</b></td><td>${esc(u.username)}</td><td><span class="chip c-n">${u.role}</span></td><td><span class="chip ${u.active==='Yes'?'c-ok':'c-no'}">${u.active==='Yes'?'Active':'Disabled'}</span></td><td class="r"><button class="ghost" data-act="edit-user" data-id="${u.id}">Edit</button></td></tr>`).join('')}</tbody></table></div>
  <p class="mut" style="margin-top:10px"><b>Admin</b>: everything, including deletes and team. <b>Editor</b>: add and edit people, payments, expenses. <b>Viewer</b>: read only. <b>Student</b>: sees only their own fee and pays by UPI.</p>`}},
 
-set(){const c=cfg();return{title:'Settings',html:`<div class="acc"><div class="card"><h3>Your account</h3><p class="mut" style="margin-bottom:12px">Signed in as ${esc(S.u.username)}</p><button class="ghost" data-act="pw">Change password</button></div>
+set(){const c=cfg();return{title:'Settings',html:`<div class="acc"><div class="card"><h3>Your account</h3><p class="mut" style="margin-bottom:12px">Signed in as ${esc(S.u.username)}</p><button class="ghost" data-act="pw">Change password</button></div><div class="card"><h3>Install the app</h3><p class="mut" style="margin-bottom:12px">Add it to your phone's home screen to open it like a normal app.</p><button class="ghost" data-act="install">Install on this phone</button></div>
  ${can(2)?`<div class="card"><h3>Trip details</h3><p class="mut">${esc(c.trip)} · ${esc(c.route)}<br>Default fee ${inr(c.fee)} per person<br>Dates: ${esc(c.start||'-')} to ${esc(c.end||'-')}<br>UPI: ${esc(c.upiId||'not set')}<br>Categories: ${esc(c.categories)}</p><div style="margin-top:12px"><button class="ghost" data-act="cfg">Edit trip details</button></div></div>`:''}</div>`}}
 };
 
@@ -369,6 +406,8 @@ const ACT={
  'import-list':async()=>{if(!confirm('Import '+STUDENTS.length+' students from the BCA / BSc list? Names already in the app are skipped, so it is safe to run twice.'))return;try{const r=await api('bulk',{names:STUDENTS});await load();toast(r.added+' added, '+r.skipped+' already existed')}catch(e){alert(e.message)}},
  'set-pw':id=>{const u=S.d.users.find(x=>x.id===id);form('New password for '+esc(u.name),[{l:'New password (min 6 characters)',k:'password',r:1}],{},async r=>{await api('saveUser',{rec:{id:u.id,username:u.username,name:u.name,role:u.role,active:u.active,password:r.password}});await load();setTimeout(()=>sheet(`<h3>Password updated</h3><p style="margin:10px 0">Username: <b>${esc(u.username)}</b><br>New password: <b>${esc(r.password)}</b></p>${u.role==='student'?'<p class="mut">The student must choose their own password at next sign-in.</p>':''}<div class="row"><button class="ghost" data-close>Close</button></div>`),50)})},
  'mk-one':id=>form('Create login',[{l:'Starting password (min 6 characters)',k:'password',r:1}],{},async r=>{const res=await api('makeStudents',{password:r.password,who:'all',only:id});await load();setTimeout(()=>sheet(res.created.length?`<h3>Login created</h3><p style="margin:10px 0">Username: <b>${esc(res.created[0].username)}</b><br>Password: <b>${esc(r.password)}</b></p><p class="mut">They must choose their own password at first sign-in.</p><div class="row"><button class="ghost" data-close>Close</button></div>`:'<h3>No login created</h3><p class="mut">This person is cancelled or already has a login.</p><div class="row"><button class="ghost" data-close>Close</button></div>'),50)}),
+ 'install':()=>{if(DP){DP.prompt();DP=null}else alert('To install: on iPhone open this page in Safari, tap Share, then "Add to Home Screen". On Android tap the browser menu (three dots), then "Install app" or "Add to Home screen".')},
+ 'qr-toggle':()=>document.querySelector('.qrw').classList.toggle('on'),
  'add-ref':id=>payForm({kind:'refund',participantId:id,date:today(),account:S.d.accounts[0]?.id,mode:'UPI'}),
  'wa-rem':id=>{const p=S.d.participants.find(x=>x.id===id);wa(p,`Hi ${p.name}, a reminder for ${cfg().trip}: fee ${inr(feeOf(p))}, paid ${inr(paidBy(id))}, pending ${inr(feeOf(p)-paidBy(id))}. Please pay at the earliest. Thank you!`)},
  'wa-rcpt':id=>{const x=S.d.payments.find(y=>y.id===id),p=S.d.participants.find(q=>q.id===x.participantId);wa(p,`Receipt - ${cfg().trip}\nReceived ${inr(x.amount)} from ${p.name} on ${x.date} (${x.mode}${x.ref?', ref '+x.ref:''}).\nTotal paid: ${inr(paidBy(p.id))} | Balance: ${inr(Math.max(feeOf(p)-paidBy(p.id),0))}\nThank you!`)},
@@ -398,10 +437,12 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('input',e=>{
  if(e.target.id==='pa')updPay();
- if(e.target.id==='q'||e.target.id==='f'){S[e.target.id]=e.target.value;if(S.rf)$('#tb').innerHTML=S.rf()}
+ if(e.target.id==='q'||e.target.id==='f'){S[e.target.id]=e.target.value;if(S.rf){$('#tb').innerHTML=S.rf();lbl()}}
 });
 
 /* ---------- boot ---------- */
+if((window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone)$('#instl').hidden=true;
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 (async()=>{
  const t0=Date.now();
  if(S.t){try{await start()}catch(e){$('#login').hidden=false}}else $('#login').hidden=false;
