@@ -27,19 +27,27 @@ button{cursor:pointer}
 .logo{width:40px;height:40px;flex:none;display:block}
 .brandrow{display:flex;align-items:center;gap:10px;padding:0 6px 6px}
 .brandrow .brand{padding:0}
-#splash{position:fixed;inset:0;z-index:100;display:grid;place-items:center;align-content:center;gap:18px;background:linear-gradient(160deg,#0d2b3e 0%,#0f5f6e 65%,#0f7c8a 100%);color:#fff;transition:opacity .5s,visibility .5s}
+#splash{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:radial-gradient(120% 90% at 50% 0%,#14677a 0%,#0d2b3e 62%);color:#fff;padding:24px;text-align:center;transition:opacity .45s,visibility .45s}
 #splash.off{opacity:0;visibility:hidden}
-#splash svg{width:112px;height:112px;filter:drop-shadow(0 14px 30px rgba(0,0,0,.35))}
-#splash h1{font-size:26px;text-align:center}
-#splash p{color:#a9cbd6;font-size:13.5px;margin-top:-10px;text-align:center}
-.sun{animation:rise 1.1s cubic-bezier(.2,.8,.2,1) both}
+#splash svg{width:104px;height:104px;border-radius:26px;animation:glow 2.4s ease-out infinite}
+#splash h1{font-size:25px;margin-top:6px}
+#splash p{color:#a9cbd6;font-size:14px;min-height:20px;max-width:300px}
+.sun{animation:rise 1s cubic-bezier(.2,.8,.2,1) both}
 .w1{animation:drift 2.4s ease-in-out infinite alternate}
 .w2{animation:drift 2.4s ease-in-out infinite alternate-reverse}
 @keyframes rise{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
 @keyframes drift{from{transform:translateX(-5px)}to{transform:translateX(5px)}}
-.ld{width:120px;height:4px;border-radius:9px;background:rgba(255,255,255,.18);overflow:hidden}
+@keyframes glow{0%{box-shadow:0 18px 44px rgba(0,0,0,.4),0 0 0 0 rgba(242,163,58,.35)}100%{box-shadow:0 18px 44px rgba(0,0,0,.4),0 0 0 26px rgba(242,163,58,0)}}
+.ld{width:140px;height:4px;border-radius:9px;background:rgba(255,255,255,.18);overflow:hidden}
 .ld i{display:block;height:100%;width:40%;border-radius:9px;background:var(--sun);animation:slide 1.1s ease-in-out infinite}
-@keyframes slide{from{transform:translateX(-100%)}to{transform:translateX(300%)}}
+@keyframes slide{from{transform:translateX(-100%)}to{transform:translateX(350%)}}
+/* busy overlay: blocks every click and key while the app talks to the server */
+#busy{position:fixed;inset:0;z-index:90;display:none;place-items:center;background:rgba(13,43,62,.28);cursor:progress}
+#busy.on{display:grid}
+#busy .bx{background:#fff;border-radius:16px;padding:18px 26px;display:flex;align-items:center;gap:14px;box-shadow:0 18px 50px rgba(0,0,0,.28);font-weight:600;opacity:0;transform:translateY(6px);transition:opacity .2s,transform .2s}
+#busy.show .bx{opacity:1;transform:none}
+.spin{width:24px;height:24px;flex:none;border-radius:50%;border:3px solid var(--foam);border-top-color:var(--sea);border-right-color:var(--sun);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 a.ghost{color:var(--ink)}
 /* fab */
 .fab{position:fixed;right:16px;bottom:78px;width:54px;height:54px;border-radius:50%;border:0;background:var(--sun);color:#2a1a00;font-size:30px;font-weight:700;box-shadow:0 8px 22px rgba(0,0,0,.3);z-index:45;display:none}
@@ -156,11 +164,10 @@ body{-webkit-tap-highlight-color:transparent;padding-left:env(safe-area-inset-le
 </style>
 </head>
 <body>
-<div id="bar"></div>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="logo" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#0d2b3e"/><path d="M18 38a14 14 0 0 1 28 0z" fill="#f2a33a"/><path d="M8 44q6-5 12 0t12 0 12 0 12 0" stroke="#3fb5c2" stroke-width="3.5" fill="none" stroke-linecap="round"/><path d="M8 52q6-5 12 0t12 0 12 0 12 0" stroke="#0f7c8a" stroke-width="3.5" fill="none" stroke-linecap="round"/></symbol></svg>
 <div id="splash" role="status" aria-label="Loading">
  <svg viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#0d2b3e"/><path class="sun" d="M18 38a14 14 0 0 1 28 0z" fill="#f2a33a"/><g class="w1"><path d="M8 44q6-5 12 0t12 0 12 0 12 0" stroke="#3fb5c2" stroke-width="3.5" fill="none" stroke-linecap="round"/></g><g class="w2"><path d="M8 52q6-5 12 0t12 0 12 0 12 0" stroke="#0f7c8a" stroke-width="3.5" fill="none" stroke-linecap="round"/></g></svg>
- <h1>Industrial Visit Ledger</h1><p>Getting your trip books ready</p><div class="ld"><i></i></div>
+ <h1>Industrial Visit Ledger</h1><p id="sp">Getting your trip books ready</p><div class="ld"><i></i></div>
 </div>
 <div id="login" hidden>
  <form class="lbox" id="lf">
@@ -182,6 +189,7 @@ body{-webkit-tap-highlight-color:transparent;padding-left:env(safe-area-inset-le
  </aside>
  <main><div class="top"><h2 id="pt"></h2><div id="actions"></div></div><div id="view"></div></main>
 </div>
+<div id="busy" role="status" aria-live="polite"><div class="bx"><div class="spin"></div><span id="bl">Loading…</span></div></div>
 <button class="fab" id="fab" aria-label="Quick add" hidden>+</button>
 <div id="modal"></div><div id="toast"></div>
 
@@ -213,17 +221,32 @@ const wa=(p,msg)=>{let n=String(p.phone||'').replace(/\D/g,'');if(n.length===10)
 const pName=id=>(S.d.participants.find(p=>p.id===id)||{name:'(deleted)'}).name;
 const status=p=>{if(p.status==='Cancelled')return['Cancelled','c-n'];const f=feeOf(p),x=paidBy(p.id);return f>0&&x>=f?['Paid','c-ok']:x>0?['Partial','c-part']:['Unpaid','c-no']};
 const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2200)};
-const busy=v=>{$('#bar').style.width=v?'70%':'100%';if(!v)setTimeout(()=>$('#bar').style.width='0',300)};
-
-async function api(action,p={}){
- busy(1);
- try{
-  const r=await fetch(API_URL,{method:'POST',body:JSON.stringify({action,token:S.t,...p})});
-  const j=await r.json();
-  if(!j.ok){if(/session expired/i.test(j.error))signOut(true);throw new Error(j.error)}
-  return j.data;
- }catch(e){throw new Error(e.message==='Failed to fetch'?'Cannot reach the server. Check your internet and the API_URL.':e.message)}
- finally{busy(0)}
+const LBL={login:'Signing in…',load:'Loading…',del:'Deleting…'};
+let NB=0,BT=null,BH=null,Q=Promise.resolve();
+const LOCKS=['#app','#login','#modal'];
+function busy(on,lbl){
+ const o=$('#busy');
+ if(on){
+  NB++;clearTimeout(BH);o.classList.add('on');$('#bl').textContent=lbl||'Saving…';
+  if(NB===1){if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();LOCKS.forEach(x=>$(x).setAttribute('inert',''));clearTimeout(BT);BT=setTimeout(()=>o.classList.add('show'),250)}
+ }else{
+  NB=Math.max(0,NB-1);
+  if(!NB)BH=setTimeout(()=>{if(NB)return;clearTimeout(BT);o.classList.remove('on','show');LOCKS.forEach(x=>$(x).removeAttribute('inert'))},150);
+ }
+}
+// every server call goes through here: one at a time, with the screen locked until it finishes
+function api(action,p={}){
+ const body=JSON.stringify({action,token:S.t,...p}),quiet=action==='logout',lbl=LBL[action]||'Saving…';
+ const run=async()=>{
+  if(!quiet)busy(true,lbl);
+  try{
+   const r=await fetch(API_URL,{method:'POST',body});const j=await r.json();
+   if(!j.ok){if(/session expired/i.test(j.error))signOut(true);throw new Error(j.error)}
+   return j.data;
+  }catch(e){throw new Error(e.message==='Failed to fetch'?'Cannot reach the server. Check your internet and the API_URL.':e.message)}
+  finally{if(!quiet)busy(false)}
+ };
+ const pr=Q.then(run,run);Q=pr.catch(()=>{});return pr;
 }
 async function load(){S.d=await api('load');S.u=S.d.user;draw()}
 function signOut(silent){$('#fab').hidden=true;if(!silent&&S.t)api('logout').catch(()=>{});S.t='';localStorage.removeItem('ivTok');S.d=null;$('#app').hidden=true;$('#login').hidden=false}
@@ -444,9 +467,21 @@ document.addEventListener('input',e=>{
 if((window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone)$('#instl').hidden=true;
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 (async()=>{
- const t0=Date.now();
- if(S.t){try{await start()}catch(e){$('#login').hidden=false}}else $('#login').hidden=false;
- setTimeout(()=>{const sp=$('#splash');sp.classList.add('off');setTimeout(()=>sp.remove(),600)},Math.max(0,1500-(Date.now()-t0)));
+ const t0=Date.now(),sp=$('#sp'),spl=$('#splash');
+ const slow=setTimeout(()=>sp.textContent='Waking up the server, this can take a few seconds…',4500);
+ const done=()=>{clearTimeout(slow);setTimeout(()=>{spl.classList.add('off');setTimeout(()=>spl.remove(),600)},Math.max(0,1100-(Date.now()-t0)))};
+ const go=async()=>{
+  if(!S.t){$('#login').hidden=false;return done()}
+  try{await start();done()}
+  catch(e){
+   if(/Cannot reach/.test(e.message)){
+    clearTimeout(slow);sp.textContent='Could not connect. Check your internet and try again.';$('#splash .ld').hidden=true;
+    const b=document.createElement('button');b.className='pri';b.textContent='Try again';
+    b.onclick=()=>{b.remove();$('#splash .ld').hidden=false;sp.textContent='Connecting…';go()};spl.appendChild(b);
+   }else{$('#login').hidden=false;done()}
+  }
+ };
+ go();
 })();
 </script>
 </body>
