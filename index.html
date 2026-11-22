@@ -159,6 +159,8 @@ const inr=n=>'₹'+Math.round(Number(n)||0).toLocaleString('en-IN');
 const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
 const sum=a=>a.reduce((t,x)=>t+Number(x.amount||0),0);
 const psum=a=>a.reduce((t,x)=>t+(x.kind==='refund'?-1:1)*Number(x.amount||0),0);
+const L=(c,g,s)=>s.split('|').map(n=>({name:n.trim(),class:c,gender:g,type:'Student'}));
+const STUDENTS=[...L('BCA','Boy','Abhinav Gopal|Midhun P Vinod|Jiswin|Britto|Albin|Amalnadh K|M N Vishnu Narayan|Abhiram|Gokul Deepak Warrier|Gowtham Krishna|Midhilaj|Uday Krishna S|Abhishek|Mohammad P.S|Abhinav NM|Abhijith Arun|Josukutty|Tiwin Joseph|Aalap|Pranav Rajesh|Aman CS|Praveen|Nevin|Mohammad Raiyan|Athul Krishna MA|Mohammad Jasin|Aadith Bobby|Rohith B K'),...L('BCA','Girl','Goury Parvathy|Mayooka|Archa|Fathima Nazrin|Sayyana|Gopika|Devika Prakash|Fathima Riya|Shereena|Hima|Shamna|Meenu|Vaika|Ganga|Keerthana|Benitta Reji|Aswathy KP|Fathimath Shabana T|Fasna K'),...L('BSc','Boy','Adithya Jyothi|Albin Thomas Moncy|Alwin B Manoj|Geever Jomon|Muhammed Adhil K|Navthej S S|P Premraj|Roufmon|Sivan P|Vyshakh M M|Nidhun'),...L('BSc','Girl','Archana Sivan|Aswathy Pradeep|Meera Krishna M B|Devika CR|Fathima Dina N')];
 const COL=['#0f7c8a','#f2a33a','#d9482b','#5b6ee1','#1b9a62','#8e5bd1','#c2a14d','#4a90a4'];
 const can=l=>({viewer:0,editor:1,admin:2}[S.u.role]>=l);
 const cfg=()=>S.d.config;
@@ -167,6 +169,8 @@ const feeOf=p=>p.status==='Cancelled'?0:(Number(p.fee)||Number(cfg().fee)||0);
 const budget=()=>{try{return JSON.parse(cfg().budget||'{}')}catch(e){return{}}};
 const paidBy=id=>psum(S.d.payments.filter(x=>x.participantId===id));
 const accName=id=>(S.d.accounts.find(a=>a.id===id)||{name:'(deleted)'}).name;
+const uname=id=>((S.d.users||[]).find(u=>u.participantId===id)||{}).username||'';
+const loginBox=id=>{const u=(S.d.users||[]).find(x=>x.participantId===id);return`<div style="margin:10px 0 0;padding:10px 12px;background:var(--foam);border-radius:10px;font-size:13.5px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">${u?`<span>Login: <b>${esc(u.username)}</b> <span class="chip ${u.active==='Yes'?'c-ok':'c-no'}">${u.active==='Yes'?'Active':'Disabled'}</span></span><button class="ghost" style="padding:5px 12px" data-act="set-pw" data-id="${u.id}">Set new password</button>`:`<span class="mut">No login yet</span><button class="ghost" style="padding:5px 12px" data-act="mk-one" data-id="${id}">Create login</button>`}</div>`};
 const tin=id=>sum((S.d.transfers||[]).filter(t=>t.to===id)),tout=id=>sum((S.d.transfers||[]).filter(t=>t.from===id));
 const wa=(p,msg)=>{let n=String(p.phone||'').replace(/\D/g,'');if(n.length===10)n='91'+n;window.open('https://wa.me/'+n+'?text='+encodeURIComponent(msg),'_blank')};
 const pName=id=>(S.d.participants.find(p=>p.id===id)||{name:'(deleted)'}).name;
@@ -237,7 +241,7 @@ function form(title,fields,v,save,opt={}){
 const saveRec=async(sh,rec)=>{await api('save',{sheet:sh,rec});await load()};
 const delRec=(sh,id)=>async()=>{await api('del',{sheet:sh,id});await load()};
 function csv(name,cols,rows){
- const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+ const q=v=>{v=String(v??'');if(/^[=+\-@]/.test(v))v="'"+v;return'"'+v.replace(/"/g,'""')+'"'};
  const t=[cols.map(c=>q(c[0])).join(','),...rows.map(r=>cols.map(c=>q(c[1](r))).join(','))].join('\n');
  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+t],{type:'text/csv'}));a.download=name+'.csv';a.click();
 }
@@ -286,10 +290,10 @@ dash(){
 
 ppl(){
  const rf=()=>{const q=S.q.toLowerCase();const l=S.d.participants.filter(p=>(!q||(p.name+p.class+p.phone).toLowerCase().includes(q))&&(!S.f||(S.f==='Student'||S.f==='Faculty'?p.type===S.f:status(p)[0]===S.f)));
-  return l.map(p=>{const s=status(p),f=feeOf(p),x=paidBy(p.id);return`<tr class="k" data-act="person" data-id="${p.id}"><td><b>${esc(p.name)}</b></td><td><span class="chip c-n">${esc(p.type)}</span></td><td>${esc(p.class)}</td><td class="r">${inr(f)}</td><td class="r">${inr(x)}</td><td class="r">${inr(Math.max(f-x,0))}</td><td><span class="chip ${s[1]}">${s[0]}</span></td></tr>`}).join('')||'<tr><td colspan="7" class="empty">No people found. Add people or use Bulk add.</td></tr>'};
- return{title:'People',rf,actions:exBtn('csv-ppl')+(can(1)?'<button class="ghost" data-act="bulk">Bulk add</button>':'')+addBtn('add-person','Add person'),
+  return l.map(p=>{const s=status(p),f=feeOf(p),x=paidBy(p.id);return`<tr class="k" data-act="person" data-id="${p.id}"><td><b>${esc(p.name)}</b></td><td><span class="chip c-n">${esc(p.type)}</span></td><td>${esc(p.class)}</td><td class="r">${inr(f)}</td><td class="r">${inr(x)}</td><td class="r">${inr(Math.max(f-x,0))}</td><td><span class="chip ${s[1]}">${s[0]}</span></td>${can(2)?`<td>${esc(uname(p.id))}</td>`:''}</tr>`}).join('')||'<tr><td colspan="8" class="empty">No people found. Add people or use Bulk add.</td></tr>'};
+ return{title:'People',rf,actions:exBtn('csv-ppl')+(can(2)?'<button class="ghost" data-act="import-list">Import class list</button>':'')+(can(1)?'<button class="ghost" data-act="bulk">Bulk add</button>':'')+addBtn('add-person','Add person'),
  html:`<div class="tools"><input id="q" placeholder="Search name, class, phone" value="${esc(S.q)}"><select id="f">${['','Student','Faculty','Paid','Partial','Unpaid','Cancelled'].map(o=>`<option value="${o}" ${S.f===o?'selected':''}>${o||'Everyone'}</option>`).join('')}</select></div>
- <div class="tw"><table><thead><tr><th>Name</th><th>Type</th><th>Class</th><th class="r">Fee</th><th class="r">Paid</th><th class="r">Due</th><th>Status</th></tr></thead><tbody id="tb">${rf()}</tbody></table></div>`}},
+ <div class="tw"><table><thead><tr><th>Name</th><th>Type</th><th>Class</th><th class="r">Fee</th><th class="r">Paid</th><th class="r">Due</th><th>Status</th>${can(2)?'<th>Login</th>':''}</tr></thead><tbody id="tb">${rf()}</tbody></table></div>`}},
 
 pay(){
  const rf=()=>{const q=S.q.toLowerCase();return S.d.payments.filter(x=>(!S.f||x.account===S.f)&&(!q||(pName(x.participantId)+x.ref+x.note).toLowerCase().includes(q))).sort((a,b)=>b.date.localeCompare(a.date)).map(x=>
@@ -334,7 +338,7 @@ set(){const c=cfg();return{title:'Settings',html:`<div class="acc"><div class="c
 
 /* ---------- actions ---------- */
 const accOpts=()=>S.d.accounts.map(a=>[a.id,a.name]);
-const personF=[{l:'Full name',k:'name',r:1},{l:'Type',k:'type',t:'select',o:[['Student','Student'],['Faculty','Faculty']]},{l:'Class / department',k:'class'},{l:'Phone',k:'phone',t:'tel'},{l:'Custom fee (leave empty for default)',k:'fee',t:'number'},{l:'Status',k:'status',t:'select',o:[['Active','Active'],['Cancelled','Cancelled (not going)']]}];
+const personF=[{l:'Full name',k:'name',r:1},{l:'Type',k:'type',t:'select',o:[['Student','Student'],['Faculty','Faculty']]},{l:'Class / department',k:'class'},{l:'Phone',k:'phone',t:'tel'},{l:'Custom fee (leave empty for default)',k:'fee',t:'number'},{l:'Status',k:'status',t:'select',o:[['Active','Active'],['Cancelled','Cancelled (not going)']]},{l:'Gender',k:'gender',t:'select',o:[['','-'],['Boy','Boy'],['Girl','Girl']]}];
 function payForm(v){
  const o=[...S.d.participants].sort((a,b)=>a.name.localeCompare(b.name)).map(p=>[p.id,`${p.name}  (due ${inr(Math.max(feeOf(p)-paidBy(p.id),0))})`]);
  form(v.kind==='refund'?(v.id?'Edit refund':'Record refund'):v.id?'Edit payment':'Record payment',[{l:v.kind==='refund'?'Refund to':'Paid by',k:'participantId',t:'select',o},{l:'Amount (₹)',k:'amount',t:'number',r:1},{l:'Date',k:'date',t:'date',r:1},{l:'Paid into account',k:'account',t:'select',o:accOpts()},
@@ -346,7 +350,7 @@ function expForm(v){
 const ACT={
  'add-person':()=>form('Add person',personF,{type:'Student'},r=>saveRec('Participants',r)),
  'person':id=>{const p=S.d.participants.find(x=>x.id===id),s=status(p),pays=S.d.payments.filter(x=>x.participantId===id).sort((a,b)=>b.date.localeCompare(a.date));
-  sheet(`<h3>${esc(p.name)}</h3><p class="mut">${esc(p.type)}${p.class?' · '+esc(p.class):''}${p.phone?' · '+esc(p.phone):''}</p>
+  sheet(`<h3>${esc(p.name)}</h3><p class="mut">${esc(p.type)}${p.class?' · '+esc(p.class):''}${p.phone?' · '+esc(p.phone):''}${p.gender?' · '+esc(p.gender):''}</p>${can(2)?loginBox(id):''}
   <div style="display:flex;gap:18px;margin:14px 0"><div><small class="mut">Fee</small><br><b class="num">${inr(feeOf(p))}</b></div><div><small class="mut">Paid</small><br><b class="num">${inr(paidBy(id))}</b></div><div><small class="mut">Due</small><br><b class="num">${inr(Math.max(feeOf(p)-paidBy(id),0))}</b></div><span class="chip ${s[1]}" style="align-self:center">${s[0]}</span></div>
   ${pays.length?pays.map(x=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-top:1px solid #edf2f5;font-size:14px"><span>${x.date} · ${esc(x.mode)}<br><small class="mut">${esc(accName(x.account))}${x.ref?' · '+esc(x.ref):''}</small></span><b>${x.kind==='refund'?'Refund −':''}${inr(x.amount)}</b>${x.kind==='refund'||!p.phone?'':`<button class="ghost" style="padding:3px 10px;font-size:12px" data-act="wa-rcpt" data-id="${x.id}">Receipt</button>`}</div>`).join(''):'<p class="mut">No payments yet.</p>'}
   <div class="row" style="margin-top:14px">${can(2)?`<button class="danger" data-act="del-person" data-id="${id}" style="margin-right:auto">Delete</button>`:''}<button class="ghost" data-close>Close</button>${can(1)?`<button class="ghost" data-act="edit-person" data-id="${id}">Edit</button>${p.phone&&feeOf(p)>paidBy(id)?`<button class="ghost" data-act="wa-rem" data-id="${id}">Remind</button>`:''}<button class="ghost" data-act="add-ref" data-id="${id}">Refund</button><button class="pri" data-act="add-pay" data-id="${id}">Record payment</button>`:''}</div>`)},
@@ -354,7 +358,7 @@ const ACT={
  'del-person':async id=>{if(!confirm('Delete this person?'))return;try{await delRec('Participants',id)();close();toast('Deleted')}catch(e){alert(e.message)}},
  'bulk':()=>form('Bulk add people',[{l:'One person per line: Name, Class, Phone',k:'t',t:'textarea'},{l:'Type',k:'type',t:'select',o:[['Student','Student'],['Faculty','Faculty']]}],{},async r=>{
   const names=r.t.split('\n').map(l=>l.split(',').map(x=>x.trim())).filter(a=>a[0]).map(a=>({name:a[0],class:a[1]||'',phone:a[2]||'',type:r.type}));
-  if(!names.length)throw new Error('Paste at least one name');await api('bulk',{names});await load()}),
+  if(!names.length)throw new Error('Paste at least one name');const res=await api('bulk',{names});await load();toast(res.added+' added'+(res.skipped?', '+res.skipped+' already existed':''))}),
  'add-pay':id=>payForm({participantId:id,date:today(),account:S.d.accounts[0]?.id,mode:'UPI'}),
  'edit-pay':id=>payForm(S.d.payments.find(x=>x.id===id)),
  'pay-full':()=>{$('#pa').value=Math.max(feeOf(S.d.me)-paidBy(S.d.me.id),0);updPay()},
@@ -362,6 +366,9 @@ const ACT={
  'claim':id=>{const c=S.d.claims.find(x=>x.id===id);if(!c||c.status!=='Pending')return;form(esc(pName(c.participantId))+' · ref '+esc(c.ref),[{l:'Amount received (₹)',k:'amount',t:'number',r:1},{l:'Received in account',k:'account',t:'select',o:accOpts()}],{amount:c.amount,account:cfg().upiAccount||S.d.accounts[0]?.id},async r=>{await api('decide',{id,decision:'Approved',amount:r.amount,account:r.account});await load()},{del:async()=>{await api('decide',{id,decision:'Rejected'});await load()},delLabel:'Reject',confirm:'Reject this payment claim?'})},
  'mk-stu':()=>form('Create student logins',[{l:'Common starting password (min 6 characters)',k:'password',r:1},{l:'Create logins for',k:'who',t:'select',o:[['Student','Students only'],['all','Students and faculty']]}],{who:'Student'},async r=>{const res=await api('makeStudents',r);S.cred=res.created.map(x=>({...x,password:r.password}));await load();setTimeout(()=>sheet(`<h3>${res.created.length} logins created</h3><p class="mut" style="margin-bottom:14px">${res.skipped} skipped (already have a login, cancelled, or not selected). Students must set their own password at first sign-in. Download the list to share usernames.</p><div class="row"><button class="ghost" data-close>Close</button><button class="pri" data-act="csv-cred">Download list</button></div>`),50)}),
  'csv-cred':()=>csv('student-logins',[['Name',x=>x.name],['Username',x=>x.username],['Password',x=>x.password]],S.cred||[]),
+ 'import-list':async()=>{if(!confirm('Import '+STUDENTS.length+' students from the BCA / BSc list? Names already in the app are skipped, so it is safe to run twice.'))return;try{const r=await api('bulk',{names:STUDENTS});await load();toast(r.added+' added, '+r.skipped+' already existed')}catch(e){alert(e.message)}},
+ 'set-pw':id=>{const u=S.d.users.find(x=>x.id===id);form('New password for '+esc(u.name),[{l:'New password (min 6 characters)',k:'password',r:1}],{},async r=>{await api('saveUser',{rec:{id:u.id,username:u.username,name:u.name,role:u.role,active:u.active,password:r.password}});await load();setTimeout(()=>sheet(`<h3>Password updated</h3><p style="margin:10px 0">Username: <b>${esc(u.username)}</b><br>New password: <b>${esc(r.password)}</b></p>${u.role==='student'?'<p class="mut">The student must choose their own password at next sign-in.</p>':''}<div class="row"><button class="ghost" data-close>Close</button></div>`),50)})},
+ 'mk-one':id=>form('Create login',[{l:'Starting password (min 6 characters)',k:'password',r:1}],{},async r=>{const res=await api('makeStudents',{password:r.password,who:'all',only:id});await load();setTimeout(()=>sheet(res.created.length?`<h3>Login created</h3><p style="margin:10px 0">Username: <b>${esc(res.created[0].username)}</b><br>Password: <b>${esc(r.password)}</b></p><p class="mut">They must choose their own password at first sign-in.</p><div class="row"><button class="ghost" data-close>Close</button></div>`:'<h3>No login created</h3><p class="mut">This person is cancelled or already has a login.</p><div class="row"><button class="ghost" data-close>Close</button></div>'),50)}),
  'add-ref':id=>payForm({kind:'refund',participantId:id,date:today(),account:S.d.accounts[0]?.id,mode:'UPI'}),
  'wa-rem':id=>{const p=S.d.participants.find(x=>x.id===id);wa(p,`Hi ${p.name}, a reminder for ${cfg().trip}: fee ${inr(feeOf(p))}, paid ${inr(paidBy(id))}, pending ${inr(feeOf(p)-paidBy(id))}. Please pay at the earliest. Thank you!`)},
  'wa-rcpt':id=>{const x=S.d.payments.find(y=>y.id===id),p=S.d.participants.find(q=>q.id===x.participantId);wa(p,`Receipt - ${cfg().trip}\nReceived ${inr(x.amount)} from ${p.name} on ${x.date} (${x.mode}${x.ref?', ref '+x.ref:''}).\nTotal paid: ${inr(paidBy(p.id))} | Balance: ${inr(Math.max(feeOf(p)-paidBy(p.id),0))}\nThank you!`)},
