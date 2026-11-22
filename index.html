@@ -119,8 +119,11 @@ tr.k{cursor:pointer}tr.k:hover td{background:#f6fafb}
 .sheet{background:#fff;border-radius:16px;padding:24px;width:100%;max-width:480px;max-height:92vh;overflow:auto}
 .sheet h3{font-size:21px;margin-bottom:16px}
 .row{display:flex;gap:10px;justify-content:flex-end;margin-top:6px;flex-wrap:wrap}
-#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:10px;font-weight:600;opacity:0;pointer-events:none;transition:.25s;z-index:99}
-#toast.on{opacity:1}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(10px);display:flex;align-items:center;gap:10px;max-width:90vw;background:var(--ink);color:#fff;padding:11px 18px 11px 12px;border-radius:14px;font-weight:600;box-shadow:0 12px 34px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:99}
+#toast.on{opacity:1;transform:translateX(-50%)}
+#toast .ti{width:24px;height:24px;flex:none;border-radius:50%;background:var(--ok);display:grid;place-items:center;font-size:13px;font-weight:800}
+#toast.err .ti{background:var(--bad)}#toast.info .ti{background:var(--sun);color:#2a1a00}
+@media(max-width:860px){#toast{bottom:calc(86px + env(safe-area-inset-bottom))}}
 @media(max-width:860px){
  #app{grid-template-columns:1fr}
  aside{position:fixed;bottom:0;top:auto;left:0;right:0;height:auto;flex-direction:row;padding:6px;z-index:40;overflow-x:auto}
@@ -220,7 +223,11 @@ const tin=id=>sum((S.d.transfers||[]).filter(t=>t.to===id)),tout=id=>sum((S.d.tr
 const wa=(p,msg)=>{let n=String(p.phone||'').replace(/\D/g,'');if(n.length===10)n='91'+n;window.open('https://wa.me/'+n+'?text='+encodeURIComponent(msg),'_blank')};
 const pName=id=>(S.d.participants.find(p=>p.id===id)||{name:'(deleted)'}).name;
 const status=p=>{if(p.status==='Cancelled')return['Cancelled','c-n'];const f=feeOf(p),x=paidBy(p.id);return f>0&&x>=f?['Paid','c-ok']:x>0?['Partial','c-part']:['Unpaid','c-no']};
-const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2200)};
+let TT=null,AC=null,LASTP=null;
+const SND=()=>localStorage.ivSound!=='off';
+function tone(seq){if(!SND())return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();let t=AC.currentTime+.02;seq.forEach(([f,d])=>{const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.16,t+.02);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d+.05);t+=d*.8})}catch(e){}}
+const chime=()=>tone([[659,.12],[880,.12],[1175,.3]]),ding=()=>tone([[988,.14],[1319,.14],[988,.14],[1319,.34]]);
+const toast=(m,t)=>{const e=$('#toast');e.className=t||'';e.innerHTML='<span class="ti">'+(t==='err'?'!':t==='info'?'🔔':'✓')+'</span><span>'+esc(m)+'</span>';void e.offsetWidth;e.classList.add('on');if(!t)chime();clearTimeout(TT);TT=setTimeout(()=>e.classList.remove('on'),t==='info'?5000:2600)};
 const LBL={login:'Signing in…',load:'Loading…',del:'Deleting…'};
 let NB=0,BT=null,BH=null,Q=Promise.resolve();
 const LOCKS=['#app','#login','#modal'];
@@ -235,8 +242,8 @@ function busy(on,lbl){
  }
 }
 // every server call goes through here: one at a time, with the screen locked until it finishes
-function api(action,p={}){
- const body=JSON.stringify({action,token:S.t,...p}),quiet=action==='logout',lbl=LBL[action]||'Saving…';
+function api(action,p={},soft){
+ const body=JSON.stringify({action,token:S.t,...p}),quiet=action==='logout'||soft===true,lbl=LBL[action]||'Saving…';
  const run=async()=>{
   if(!quiet)busy(true,lbl);
   try{
@@ -248,7 +255,16 @@ function api(action,p={}){
  };
  const pr=Q.then(run,run);Q=pr.catch(()=>{});return pr;
 }
-async function load(){S.d=await api('load');S.u=S.d.user;draw()}
+const typing=()=>/^(INPUT|SELECT|TEXTAREA)$/.test((document.activeElement||{}).tagName||'');
+async function load(soft){S.d=await api('load',{},soft);S.u=S.d.user;LASTP=(S.d.claims||[]).filter(c=>c.status==='Pending').length;if(soft&&(typing()||$('#modal').classList.contains('on')))drawNav();else draw()}
+// admins and helpers: quietly check for new student payments while the app is open
+async function poll(){
+ if(!S.u||!S.d||S.u.role==='student'||!can(1)||document.visibilityState!=='visible'||NB)return;
+ try{const r=await api('poll',{},true);
+  if(LASTP!==null&&r.pending!==LASTP){const more=r.pending>LASTP;await load(true);if(more){ding();toast('New payment to verify','info')}}
+ }catch(e){}
+}
+setInterval(poll,30000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')poll()});
 function signOut(silent){$('#fab').hidden=true;if(!silent&&S.t)api('logout').catch(()=>{});S.t='';localStorage.removeItem('ivTok');S.d=null;$('#app').hidden=true;$('#login').hidden=false}
 
 $('#lf').onsubmit=async e=>{
@@ -260,6 +276,8 @@ $('#lf').onsubmit=async e=>{
 $('#out').onclick=()=>signOut();
 async function start(){
  try{await load()}catch(e){if(/new password/i.test(e.message)){forcePw();return}throw e}
+ if(location.hash==='#verify'&&can(1)){S.page='claims';history.replaceState(null,'',location.pathname+location.search);draw()}
+ if(S.u.role==='admin'&&!cfg().appUrl&&location.protocol==='https:')api('saveConfig',{cfg:{appUrl:location.origin+location.pathname}},true).then(()=>load(true)).catch(()=>{});
  $('#login').hidden=true;$('#app').hidden=false;
 }
 function forcePw(){S.lock=true;$('#app').hidden=true;$('#login').hidden=false;
@@ -271,12 +289,15 @@ function updPay(){const e=$('#pa');if(!e)return;const c=S.d.config,x=S.d.me,a=Ma
 
 /* ---------- shell ---------- */
 const PAGES=[['dash','Overview',0],['ppl','People',0],['pay','Payments',0],['claims','Verify',1],['exp','Expenses',0],['acc','Accounts',0],['log','Activity',2],['team','Team',2],['set','Settings',0]];
+function drawNav(){
+ const pend=(S.d.claims||[]).filter(c=>c.status==='Pending').length;
+ $('#nav').innerHTML=(S.u.role==='student'?[['me','My payments'],['set','Password']]:PAGES.filter(p=>can(p[2]))).map(p=>`<button data-go="${p[0]}" class="${S.page===p[0]?'on':''}">${p[1]}${p[0]==='claims'&&pend?` (${pend})`:''}</button>`).join('');
+}
 function draw(){
  if(S.u.role==='student'&&!['me','set'].includes(S.page))S.page='me';
  const c=cfg();$('#brand').textContent=c.trip||'Industrial Visit';$('#route').textContent=c.route||'';
  $('#meN').textContent=S.u.name;$('#meR').textContent=S.u.role;
- const pend=(S.d.claims||[]).filter(c=>c.status==='Pending').length;
- $('#nav').innerHTML=(S.u.role==='student'?[['me','My payments'],['set','Password']]:PAGES.filter(p=>can(p[2]))).map(p=>`<button data-go="${p[0]}" class="${S.page===p[0]?'on':''}">${p[1]}${p[0]==='claims'&&pend?` (${pend})`:''}</button>`).join('');
+ drawNav();
  const pg=VIEWS[S.page]();
  $('#fab').hidden=!can(1);$('#pt').textContent=pg.title;$('#actions').innerHTML=pg.actions||'';$('#view').innerHTML=pg.html;S.rf=pg.rf||null;if(S.u.role==='student'&&S.page==='me')updPay();lbl();
 }
@@ -294,9 +315,9 @@ function form(title,fields,v,save,opt={}){
  <div class="err"></div><div class="row">${opt.del?'<button type="button" class="danger" id="dl" style="margin-right:auto">'+(opt.delLabel||'Delete')+'</button>':''}<button type="button" class="ghost" data-close>Cancel</button><button class="pri">Save</button></div></form>`);
  const f=$('#modal form');f.querySelector('input,select')?.focus();
  f.onsubmit=async e=>{e.preventDefault();const b=f.querySelector('.pri');b.disabled=true;
-  try{await save(Object.fromEntries(new FormData(f)));close();toast('Saved')}catch(x){f.querySelector('.err').textContent=x.message;b.disabled=false}};
+  try{await save(Object.fromEntries(new FormData(f)));close();toast(opt.msg||'Saved')}catch(x){f.querySelector('.err').textContent=x.message;b.disabled=false}};
  if(opt.del)$('#dl').onclick=async()=>{if(!confirm(opt.confirm||'Delete this entry? This is recorded in the activity log.'))return;
-  try{await opt.del();close();toast('Deleted')}catch(x){f.querySelector('.err').textContent=x.message}};
+  try{await opt.del();close();toast(opt.delMsg||'Deleted')}catch(x){f.querySelector('.err').textContent=x.message}};
 }
 const saveRec=async(sh,rec)=>{await api('save',{sheet:sh,rec});await load()};
 const delRec=(sh,id)=>async()=>{await api('del',{sheet:sh,id});await load()};
@@ -314,6 +335,7 @@ const BUD=()=>{const b=budget(),ed=S.be&&can(2),h=cats().map((c,i)=>{const p=Num
  return`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13.5px"><span>${esc(c)}</span>${right}</div>${ed?'':`<div class="prog" style="margin:5px 0 0"><i style="width:${Math.min(pc,100)}%;background:${o?'var(--bad)':pc>85?'var(--sun)':'var(--sea)'}"></i></div>${o?`<small style="color:var(--bad);font-weight:600">Over by ${inr(a-p)}</small>`:''}`}</div>`}).join('');
  const btns=!can(2)?'':ed?'<span style="display:flex;gap:8px"><button class="ghost" data-act="budget-cancel">Cancel</button><button class="pri" data-act="budget-save">Save budgets</button></span>':'<button class="ghost" data-act="budget">Edit budgets</button>';
  return`<div class="card" style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px;flex-wrap:wrap"><h3 style="margin:0">Budget vs actual</h3>${btns}</div>${h}${ed?'<label style="margin:14px 0 0">Add a category (optional)<input id="bnew" placeholder="e.g. Tips, Medical"></label>':''}</div>`};
+const notifCard=()=>{const t=cfg().ntfyTopic||'';return`<div class="card"><h3>Phone notifications</h3><p class="mut" style="margin-bottom:10px">Get an instant alert on your phone when a student submits a payment. Tap it to open Verify.</p><ol style="padding-left:18px;margin-bottom:12px;font-size:14px;display:grid;gap:4px"><li>Install the free <b>ntfy</b> app (Android or iPhone).</li><li>Tap <b>+</b> and subscribe to the topic below.</li><li>Press <b>Send test</b>.</li></ol><div style="background:var(--foam);border-radius:10px;padding:9px 12px;font-family:monospace;font-size:13px;word-break:break-all;margin-bottom:12px">${esc(t)||'No topic yet. Run setup() in Apps Script.'}</div><div class="row" style="justify-content:flex-start"><button class="ghost" data-act="n-test">Send test</button><button class="ghost" data-act="n-new">New topic</button></div><small class="mut" style="display:block;margin-top:10px">Keep the topic private, it works like a password. Alerts contain only the student's name and the amount.</small></div>`};
 /* ---------- views ---------- */
 const VIEWS={
 dash(){
@@ -395,7 +417,7 @@ team(){
  <div class="tw"><table><thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Status</th><th></th></tr></thead><tbody id="tb">${rf()}</tbody></table></div>
  <p class="mut" style="margin-top:10px"><b>Admin</b>: everything, including deletes and team. <b>Editor</b>: add and edit people, payments, expenses. <b>Viewer</b>: read only. <b>Student</b>: sees only their own fee and pays by UPI.</p>`}},
 
-set(){const c=cfg();return{title:'Settings',html:`<div class="acc"><div class="card"><h3>Your account</h3><p class="mut" style="margin-bottom:12px">Signed in as ${esc(S.u.username)}</p><button class="ghost" data-act="pw">Change password</button></div><div class="card"><h3>Install the app</h3><p class="mut" style="margin-bottom:12px">Add it to your phone's home screen to open it like a normal app.</p><button class="ghost" data-act="install">Install on this phone</button></div>
+set(){const c=cfg();return{title:'Settings',html:`<div class="acc"><div class="card"><h3>Your account</h3><p class="mut" style="margin-bottom:12px">Signed in as ${esc(S.u.username)}</p><button class="ghost" data-act="pw">Change password</button></div><div class="card"><h3>Install the app</h3><p class="mut" style="margin-bottom:12px">Add it to your phone's home screen to open it like a normal app.</p><button class="ghost" data-act="install">Install on this phone</button></div><div class="card"><h3>Sound effects</h3><p class="mut" style="margin-bottom:12px">A chime on success and an alert for new payments.</p><button class="ghost" data-act="snd-toggle">Sound: ${SND()?'On':'Off'}</button></div>${can(2)?notifCard():''}
  ${can(2)?`<div class="card"><h3>Trip details</h3><p class="mut">${esc(c.trip)} · ${esc(c.route)}<br>Default fee ${inr(c.fee)} per person<br>Dates: ${esc(c.start||'-')} to ${esc(c.end||'-')}<br>UPI: ${esc(c.upiId||'not set')}<br>Categories: ${esc(c.categories)}</p><div style="margin-top:12px"><button class="ghost" data-act="cfg">Edit trip details</button></div></div>`:''}</div>`}}
 };
 
@@ -425,8 +447,8 @@ const ACT={
  'add-pay':id=>payForm({participantId:id,date:today(),account:S.d.accounts[0]?.id,mode:'UPI'}),
  'edit-pay':id=>payForm(S.d.payments.find(x=>x.id===id)),
  'pay-full':()=>{$('#pa').value=Math.max(feeOf(S.d.me)-paidBy(S.d.me.id),0);updPay()},
- 'claim-send':async()=>{const a=Number($('#pa').value),due=Math.max(feeOf(S.d.me)-paidBy(S.d.me.id),0);if(!(a>0)||a>due)return alert('Enter an amount between 1 and '+inr(due));try{await api('claim',{amount:a,ref:$('#pr').value});await load();toast('Sent for verification')}catch(e){alert(e.message)}},
- 'claim':id=>{const c=S.d.claims.find(x=>x.id===id);if(!c||c.status!=='Pending')return;form(esc(pName(c.participantId))+' · ref '+esc(c.ref),[{l:'Amount received (₹)',k:'amount',t:'number',r:1},{l:'Received in account',k:'account',t:'select',o:accOpts()}],{amount:c.amount,account:cfg().upiAccount||S.d.accounts[0]?.id},async r=>{await api('decide',{id,decision:'Approved',amount:r.amount,account:r.account});await load()},{del:async()=>{await api('decide',{id,decision:'Rejected'});await load()},delLabel:'Reject',confirm:'Reject this payment claim?'})},
+ 'claim-send':async()=>{const a=Number($('#pa').value),due=Math.max(feeOf(S.d.me)-paidBy(S.d.me.id),0);if(!(a>0)||a>due)return alert('Enter an amount between 1 and '+inr(due));try{await api('claim',{amount:a,ref:$('#pr').value});await load();toast('Payment submitted. The organiser will verify it shortly.')}catch(e){alert(e.message)}},
+ 'claim':id=>{const c=S.d.claims.find(x=>x.id===id);if(!c||c.status!=='Pending')return;form(esc(pName(c.participantId))+' · ref '+esc(c.ref),[{l:'Amount received (₹)',k:'amount',t:'number',r:1},{l:'Received in account',k:'account',t:'select',o:accOpts()}],{amount:c.amount,account:cfg().upiAccount||S.d.accounts[0]?.id},async r=>{await api('decide',{id,decision:'Approved',amount:r.amount,account:r.account});await load()},{del:async()=>{await api('decide',{id,decision:'Rejected'});await load()},delLabel:'Reject',confirm:'Reject this payment claim?',msg:'Payment approved and added to Payments',delMsg:'Payment rejected'})},
  'mk-stu':()=>form('Create student logins',[{l:'Common starting password (min 6 characters)',k:'password',r:1},{l:'Create logins for',k:'who',t:'select',o:[['Student','Students only'],['all','Students and faculty']]}],{who:'Student'},async r=>{const res=await api('makeStudents',r);S.cred=res.created.map(x=>({...x,password:r.password}));await load();setTimeout(()=>sheet(`<h3>${res.created.length} logins created</h3><p class="mut" style="margin-bottom:14px">${res.skipped} skipped (already have a login, cancelled, or not selected). Students must set their own password at first sign-in. Download the list to share usernames.</p><div class="row"><button class="ghost" data-close>Close</button><button class="pri" data-act="csv-cred">Download list</button></div>`),50)}),
  'csv-cred':()=>csv('student-logins',[['Name',x=>x.name],['Username',x=>x.username],['Password',x=>x.password]],S.cred||[]),
  'import-list':async()=>{if(!confirm('Import '+STUDENTS.length+' students from the BCA / BSc list? Names already in the app are skipped, so it is safe to run twice.'))return;try{const r=await api('bulk',{names:STUDENTS});await load();toast(r.added+' added, '+r.skipped+' already existed')}catch(e){alert(e.message)}},
@@ -434,6 +456,9 @@ const ACT={
  'mk-one':id=>form('Create login',[{l:'Starting password (min 6 characters)',k:'password',r:1}],{},async r=>{const res=await api('makeStudents',{password:r.password,who:'all',only:id});await load();setTimeout(()=>sheet(res.created.length?`<h3>Login created</h3><p style="margin:10px 0">Username: <b>${esc(res.created[0].username)}</b><br>Password: <b>${esc(r.password)}</b></p><p class="mut">They must choose their own password at first sign-in.</p><div class="row"><button class="ghost" data-close>Close</button></div>`:'<h3>No login created</h3><p class="mut">This person is cancelled or already has a login.</p><div class="row"><button class="ghost" data-close>Close</button></div>'),50)}),
  'install':()=>{if(DP){DP.prompt();DP=null}else alert('To install: on iPhone open this page in Safari, tap Share, then "Add to Home Screen". On Android tap the browser menu (three dots), then "Install app" or "Add to Home screen".')},
  'qr-toggle':()=>document.querySelector('.qrw').classList.toggle('on'),
+ 'snd-toggle':()=>{localStorage.ivSound=SND()?'off':'on';draw();if(SND())chime()},
+ 'n-test':async()=>{try{await api('testNotify');toast('Test sent. Check your phone.','info')}catch(e){alert(e.message)}},
+ 'n-new':async()=>{if(!confirm('Create a new topic? You must subscribe to the new one in the ntfy app.'))return;try{await api('newTopic');await load();toast('New topic created')}catch(e){alert(e.message)}},
  'add-ref':id=>payForm({kind:'refund',participantId:id,date:today(),account:S.d.accounts[0]?.id,mode:'UPI'}),
  'wa-rem':id=>{const p=S.d.participants.find(x=>x.id===id);wa(p,`Hi ${p.name}, a reminder for ${cfg().trip}: fee ${inr(feeOf(p))}, paid ${inr(paidBy(id))}, pending ${inr(feeOf(p)-paidBy(id))}. Please pay at the earliest. Thank you!`)},
  'wa-rcpt':id=>{const x=S.d.payments.find(y=>y.id===id),p=S.d.participants.find(q=>q.id===x.participantId);wa(p,`Receipt - ${cfg().trip}\nReceived ${inr(x.amount)} from ${p.name} on ${x.date} (${x.mode}${x.ref?', ref '+x.ref:''}).\nTotal paid: ${inr(paidBy(p.id))} | Balance: ${inr(Math.max(feeOf(p)-paidBy(p.id),0))}\nThank you!`)},
@@ -451,7 +476,7 @@ const ACT={
  accForm:v=>form(v.id?'Edit account':'Add account',[{l:'Account name (e.g. Ray UPI, Faculty cash)',k:'name',r:1},{l:'Held by',k:'holder'}],v,r=>saveRec('Accounts',{...v,...r}),{del:v.id?delRec('Accounts',v.id):null}),
  'add-user':()=>ACT.userForm({role:'editor',active:'Yes'}),'edit-user':id=>ACT.userForm(S.d.users.find(u=>u.id===id)),
  userForm:v=>form(v.id?'Edit account':'Create account',[{l:'Full name',k:'name',r:1},{l:'Username',k:'username',r:1},{l:'Role',k:'role',t:'select',o:[['editor','Editor'],['viewer','Viewer'],['admin','Admin'],...(v.role==='student'?[['student','Student']]:[])]},{l:'Status',k:'active',t:'select',o:[['Yes','Active'],['No','Disabled']]},{l:v.id?'New password (leave empty to keep)':'Password (min 6 characters)',k:'password',t:'text'}],v,async r=>{await api('saveUser',{rec:{...v,...r}});await load()}),
- 'cfg':()=>form('Trip details',[{l:'Trip name',k:'trip'},{l:'Route',k:'route'},{l:'Start date',k:'start',t:'date'},{l:'End date',k:'end',t:'date'},{l:'Default fee per person (₹)',k:'fee',t:'number'},{l:'UPI ID for student payments (e.g. name@okaxis)',k:'upiId'},{l:'Payee name shown in UPI app',k:'upiName'},{l:'Student UPI money is received in account',k:'upiAccount',t:'select',o:accOpts()},{l:'Expense categories (comma separated)',k:'categories',t:'textarea'}],cfg(),async r=>{await api('saveConfig',{cfg:r});await load()}),
+ 'cfg':()=>form('Trip details',[{l:'Trip name',k:'trip'},{l:'Route',k:'route'},{l:'Start date',k:'start',t:'date'},{l:'End date',k:'end',t:'date'},{l:'Default fee per person (₹)',k:'fee',t:'number'},{l:'UPI ID for student payments (e.g. name@okaxis)',k:'upiId'},{l:'Payee name shown in UPI app',k:'upiName'},{l:'Student UPI money is received in account',k:'upiAccount',t:'select',o:accOpts()},{l:'App link (opened when you tap a notification)',k:'appUrl'},{l:'Expense categories (comma separated)',k:'categories',t:'textarea'}],{...cfg(),appUrl:cfg().appUrl||location.origin+location.pathname},async r=>{await api('saveConfig',{cfg:r});await load()}),
  'pw':()=>form('Change password',[{l:'Current password',k:'old',t:'password',r:1},{l:'New password (min 6 characters)',k:'pw',t:'password',r:1}],{},r=>api('changePassword',r)),
  'csv-ppl':()=>csv('people',[['Name',p=>p.name],['Type',p=>p.type],['Class',p=>p.class],['Phone',p=>p.phone],['Fee',feeOf],['Paid',p=>paidBy(p.id)],['Due',p=>Math.max(feeOf(p)-paidBy(p.id),0)],['Status',p=>status(p)[0]]],S.d.participants),
  'csv-pay':()=>csv('payments',[['Date',x=>x.date],['Name',x=>pName(x.participantId)],['Amount',x=>x.amount],['Account',x=>accName(x.account)],['Type',x=>x.kind==='refund'?'Refund':'Payment'],['Mode',x=>x.mode],['Reference',x=>x.ref],['Note',x=>x.note],['Entered by',x=>x.by]],S.d.payments),
