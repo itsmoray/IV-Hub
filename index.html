@@ -7,6 +7,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="IV Ledger">
 <title>Industrial Visit Ledger</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230d2b3e'/%3E%3Cpath d='M18 38a14 14 0 0 1 28 0z' fill='%23f2a33a'/%3E%3Cpath d='M8 44q6-5 12 0t12 0 12 0 12 0' stroke='%233fb5c2' stroke-width='3.5' fill='none' stroke-linecap='round'/%3E%3Cpath d='M8 52q6-5 12 0t12 0 12 0 12 0' stroke='%230f7c8a' stroke-width='3.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
@@ -232,7 +233,37 @@ input:focus,select:focus,textarea:focus{border-color:var(--sea);box-shadow:0 0 0
  tr.k:active{transform:scale(.985)}
 }
 @media(prefers-reduced-motion:reduce){.enter>*,.lbox,#modal.on,#modal.on .sheet,.mmenu.on{animation:none!important}}
-@media print{aside,.mbar,#actions,.tools,#modal{display:none!important}#app{display:block}}
+/* ===== Bubble dock + solid dark top (status bar) ===== */
+html{background:#0d2b3e;min-height:100%}
+body{min-height:100vh;min-height:100dvh;overscroll-behavior-y:none}
+#login{position:fixed;inset:0;min-height:0;overflow-y:auto;display:flex;overscroll-behavior:none;padding:calc(20px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom))}
+#login .lbox{margin:auto}
+#dock{display:none}
+.mmenu{color:var(--ink)}
+.mlist{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.mi{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:#f4f8f9;border:0;border-radius:16px;padding:0 16px;min-height:54px;font-weight:700;font-size:15.5px}
+.mi .ic{width:36px;height:36px;border-radius:12px;background:#fff;display:grid;place-items:center;color:var(--sea);box-shadow:0 1px 3px rgba(13,43,62,.08)}
+.mi .ic svg{width:20px;height:20px}
+.mi.on{background:#fdf0d8}.mi.on .ic{background:var(--sun);color:#2a1a00}
+.mi.out{color:var(--bad);background:#fdf1ee}.mi.out .ic{color:var(--bad)}
+@media(max-width:860px){
+ aside{display:none!important}
+ .mbar{background:var(--ink);color:#fff;border-bottom:0;backdrop-filter:none;-webkit-backdrop-filter:none;padding-bottom:14px}
+ .mbar .logo{box-shadow:none}.mbar .mt span{color:#8fb2c0}
+ .mbar .av{background:var(--sun);color:#2a1a00;box-shadow:none}
+ #dock{display:flex;position:fixed;left:14px;right:14px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:40;gap:2px;padding:6px;border-radius:28px;background:rgba(13,43,62,.95);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 18px 40px -10px rgba(7,24,36,.6),0 0 0 1px rgba(255,255,255,.07) inset;animation:sheetUp .5s var(--ease) both}
+ #dock button{flex:1 1 0;min-width:0;min-height:56px;padding:6px 0 5px;border:0;border-radius:22px;background:none;color:#9dbccb;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-weight:600;transition:background .25s,color .25s,transform .25s var(--ease)}
+ #dock button em{font-style:normal;font-size:10.5px;line-height:1;letter-spacing:.01em}
+ #dock .ic{position:relative;display:block;height:23px}
+ #dock svg{width:23px;height:23px;display:block}
+ #dock button.on{background:var(--sun);color:#2a1a00;box-shadow:0 8px 18px -6px rgba(242,163,58,.75);transform:translateY(-2px)}
+ #dock .bd{position:absolute;top:-6px;right:-10px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--bad);color:#fff;font:700 10.5px/17px 'Figtree',sans-serif;text-align:center;box-shadow:0 0 0 2px #0d2b3e}
+ #dock button.on .bd{box-shadow:0 0 0 2px var(--sun)}
+ .fab{bottom:calc(102px + env(safe-area-inset-bottom))}
+ #toast{bottom:calc(106px + env(safe-area-inset-bottom))}
+ main{padding-bottom:calc(128px + env(safe-area-inset-bottom))}
+}
+@media print{aside,.mbar,#dock,#actions,.tools,#modal{display:none!important}#app{display:block}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -262,6 +293,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--sea);box-shadow:0 0 0
  </aside>
  <header class="mbar"><svg class="logo"><use href="#logo"/></svg><div class="mt"><b id="mbT"></b><span id="mbS"></span></div><button class="av" id="mAv" aria-label="Account menu" aria-haspopup="true"></button>
   <div class="mmenu" id="mMenu" role="menu"><div class="who"><b id="mmN"></b><span id="mmR"></span></div><button id="mOut" role="menuitem"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>Sign out</button></div></header>
+ <nav id="dock" aria-label="Main"></nav>
  <main><div class="top"><h2 id="pt"></h2><div id="actions"></div></div><div id="view"></div></main>
 </div>
 <div id="busy" role="status" aria-live="polite"><div class="bx"><div class="spin"></div><span id="bl">Loading…</span></div></div>
@@ -366,6 +398,21 @@ function updPay(){const e=$('#pa');if(!e)return;const c=S.d.config,x=S.d.me,a=Ma
 
 /* ---------- shell ---------- */
 const PAGES=[['dash','Overview',0],['ppl','People',0],['pay','Payments',0],['claims','Verify',1],['exp','Expenses',0],['acc','Accounts',0],['log','Activity',2],['team','Team',2],['set','Settings',0]];
+const PRI=['dash','ppl','pay','claims','exp'],LAB={dash:'Home',ppl:'People',pay:'Payments',claims:'Verify',exp:'Expenses',me:'My fees',set:'Password'};
+const IC={dash:'<path d="M3 11l9-8 9 8"/><path d="M5 9.5V20h14V9.5"/>',ppl:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.3c2.2.7 3.5 2.6 3.5 5.7"/>',pay:'<rect x="2.5" y="5" width="19" height="14" rx="3"/><path d="M2.5 10h19M6.5 15h4"/>',claims:'<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>',exp:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',acc:'<path d="M3 10l9-6 9 6"/><path d="M5 10v8M10 10v8M14 10v8M19 10v8M3 20h18"/>',log:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',team:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',set:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',more:'<circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/>',out:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/>'};
+const icon=k=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${IC[k]}</svg>`;
+const navList=()=>S.u.role==='student'?[['me','My payments'],['set','Password']]:PAGES.filter(p=>can(p[2]));
+const moreList=()=>S.u.role==='student'?[]:navList().filter(p=>!PRI.includes(p[0]));
+function drawDock(){
+ const pend=(S.d.claims||[]).filter(c=>c.status==='Pending').length,all=navList(),more=moreList(),pri=S.u.role==='student'?all:all.filter(p=>PRI.includes(p[0]));
+ $('#dock').innerHTML=pri.map(p=>`<button data-go="${p[0]}" class="${S.page===p[0]?'on':''}" aria-label="${p[1]}"><span class="ic">${icon(p[0])}${p[0]==='claims'&&pend?`<b class="bd">${pend}</b>`:''}</span><em>${LAB[p[0]]||p[1]}</em></button>`).join('')+(more.length?`<button id="mre" class="${more.some(p=>p[0]===S.page)?'on':''}" aria-label="More"><span class="ic">${icon('more')}</span><em>More</em></button>`:'');
+}
+function openMore(){
+ const m=moreList();
+ sheet(`<h3>More</h3><div class="mlist">${m.map(p=>`<button class="mi ${S.page===p[0]?'on':''}" data-go="${p[0]}" data-close><span class="ic">${icon(p[0])}</span>${p[1]}</button>`).join('')}</div><div class="mlist"><button class="mi out" id="mo"><span class="ic">${icon('out')}</span>Sign out</button></div>`);
+ $('#mo').onclick=()=>{close();signOut()};
+}
+$('#dock').onclick=e=>{if(e.target.closest('#mre'))openMore()};
 function drawNav(){
  const pend=(S.d.claims||[]).filter(c=>c.status==='Pending').length;
  $('#nav').innerHTML=(S.u.role==='student'?[['me','My payments'],['set','Password']]:PAGES.filter(p=>can(p[2]))).map(p=>`<button data-go="${p[0]}" class="${S.page===p[0]?'on':''}">${p[1]}${p[0]==='claims'&&pend?` (${pend})`:''}</button>`).join('');
@@ -375,7 +422,7 @@ function draw(){
  const c=cfg();$('#brand').textContent=c.trip||'Industrial Visit';$('#route').textContent=c.route||'';
  $('#meN').textContent=S.u.name;$('#meR').textContent=S.u.role;
  $('#mbT').textContent=c.trip||'Industrial Visit';$('#mbS').textContent=S.u.name+' · '+S.u.role;$('#mmN').textContent=S.u.name;$('#mmR').textContent=S.u.role;$('#mAv').textContent=(S.u.name||'?').trim().charAt(0).toUpperCase();
- drawNav();
+ drawNav();drawDock();
  {const a=document.querySelector('aside'),b=$('#nav .on');if(b&&innerWidth<=860&&a.scrollWidth>a.clientWidth)a.scrollTo({left:b.offsetLeft-(a.clientWidth-b.offsetWidth)/2,behavior:'smooth'})}
  const pg=VIEWS[S.page]();
  $('#fab').hidden=!can(1);$('#pt').textContent=pg.title;$('#actions').innerHTML=pg.actions||'';$('#view').innerHTML=pg.html;if(S.page!==LP){LP=S.page;const v=$('#view');v.classList.remove('enter');void v.offsetWidth;v.classList.add('enter')}S.rf=pg.rf||null;if(S.u.role==='student'&&S.page==='me')updPay();if(S.page==='set'&&S.u.role==='admin')pushStatus();lbl();
