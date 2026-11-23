@@ -518,10 +518,12 @@ const exBtn=a=>`<button class="ghost" data-act="${a}">Export CSV</button>`;
 
 const TR=()=>{const t=[...(S.d.transfers||[])].sort((a,b)=>b.date.localeCompare(a.date));return`<h3 style="margin:22px 0 10px">Transfers between accounts</h3><div class="tw"><table><thead><tr><th>Date</th><th>From</th><th>To</th><th class="r">Amount</th><th>Note</th><th>Entered by</th></tr></thead><tbody>${t.map(x=>`<tr ${can(1)?`class="k" data-act="edit-tr" data-id="${x.id}"`:''}><td>${x.date}</td><td>${esc(accName(x.from))}</td><td>${esc(accName(x.to))}</td><td class="r">${inr(x.amount)}</td><td class="mut">${esc(x.note)}</td><td class="mut">${esc(x.by)}</td></tr>`).join('')||'<tr><td colspan="6" class="empty">No transfers yet. Use Transfer money when cash moves between accounts.</td></tr>'}</tbody></table></div>`};
 const BUD=()=>{const b=budget(),ed=S.be&&can(2),h=cats().map((c,i)=>{const p=Number(b[c])||0,a=sum(S.d.expenses.filter(x=>x.category===c)),pc=p?a/p*100:0,o=p&&a>p;
- const right=ed?`<span><b>${inr(a)}</b> <span class="mut">of ₹</span> <input id="bi${i}" type="number" min="0" step="any" inputmode="decimal" value="${p||''}" placeholder="Budget" style="width:130px;padding:6px 9px"></span>`:`<span><b style="color:${o?'var(--bad)':'inherit'}">${inr(a)}</b> <span class="mut">/ ${p?inr(p):'no budget'}</span></span>`;
+ const gone=ed&&(S.bdel||[]).includes(c),bv=(S.bv&&S.bv[c]!==undefined)?S.bv[c]:(p||'');
+ if(gone)return`<div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13.5px;opacity:.65"><span><s>${esc(c)}</s> <small class="mut">will be removed when you save</small></span><button type="button" class="ghost" style="padding:5px 12px;min-height:0" data-act="bud-undo" data-id="${i}">Undo</button></div>`;
+ const right=ed?`<span style="display:flex;align-items:center;gap:6px"><b>${inr(a)}</b> <span class="mut">of ₹</span> <input id="bi${i}" type="number" min="0" step="any" inputmode="decimal" value="${bv}" placeholder="Budget" style="width:130px;padding:6px 9px"><button type="button" class="danger" style="padding:5px 12px;min-height:0" data-act="bud-del" data-id="${i}">Remove</button></span>`:`<span><b style="color:${o?'var(--bad)':'inherit'}">${inr(a)}</b> <span class="mut">/ ${p?inr(p):'no budget'}</span></span>`;
  return`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13.5px"><span>${esc(c)}</span>${right}</div>${ed?'':`<div class="prog" style="margin:5px 0 0"><i style="width:${Math.min(pc,100)}%;background:${o?'var(--bad)':pc>85?'var(--sun)':'var(--sea)'}"></i></div>${o?`<small style="color:var(--bad);font-weight:600">Over by ${inr(a-p)}</small>`:''}`}</div>`}).join('');
  const btns=!can(2)?'':ed?'<span style="display:flex;gap:8px"><button class="ghost" data-act="budget-cancel">Cancel</button><button class="pri" data-act="budget-save">Save budgets</button></span>':'<button class="ghost" data-act="budget">Edit budgets</button>';
- return`<div class="card" style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px;flex-wrap:wrap"><h3 style="margin:0">Budget vs actual</h3>${btns}</div>${h}${ed?'<label style="margin:14px 0 0">Add a category (optional)<input id="bnew" placeholder="e.g. Tips, Medical"></label>':''}</div>`};
+ return`<div class="card" style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px;flex-wrap:wrap"><h3 style="margin:0">Budget vs actual</h3>${btns}</div>${h}${ed?'<label style="margin:14px 0 0">Add a category (optional)<input id="bnew" placeholder="e.g. Tips, Medical" value="'+esc(S.bn||'')+'"></label>':''}</div>`};
 const b64uToU8=s=>{s=s.replace(/-/g,'+').replace(/_/g,'/');s+='='.repeat((4-s.length%4)%4);const r=atob(s);return Uint8Array.from(r,c=>c.charCodeAt(0))};
 const pushOk=()=>'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window;
 const swReady=()=>Promise.race([navigator.serviceWorker.ready,new Promise((_,rj)=>setTimeout(()=>rj(new Error('The app is still starting. Wait a moment and try again.')),5000))]);
@@ -722,11 +724,23 @@ const ACT={
  'add-tr':()=>ACT.trForm({date:today(),from:S.d.accounts[0]?.id,to:S.d.accounts[1]?.id||S.d.accounts[0]?.id}),
  'edit-tr':id=>ACT.trForm(S.d.transfers.find(x=>x.id===id)),
  trForm:v=>form(v.id?'Edit transfer':'Transfer money',[{l:'From account',k:'from',t:'select',o:accOpts()},{l:'To account',k:'to',t:'select',o:accOpts()},{l:'Amount (₹)',k:'amount',t:'number',r:1},{l:'Date',k:'date',t:'date',r:1},{l:'Note',k:'note'}],v,r=>saveRec('Transfers',{...v,...r}),{del:v.id&&can(2)?delRec('Transfers',v.id):null}),
- 'budget':()=>{S.be=true;draw()},
- 'budget-cancel':()=>{S.be=false;draw()},
- 'budget-save':async()=>{const c=cats(),o={};c.forEach((x,i)=>{const v=Number($('#bi'+i).value);if(v>0)o[x]=v});
-  const nc=($('#bnew').value||'').trim().replace(/,/g,' '),nb=JSON.stringify(o),p={budget:nb};if(nc&&!c.includes(nc))p.categories=c.concat(nc).join(',');
-  try{await api('saveConfig',{cfg:p});await load();if(cfg().budget!==nb)throw new Error('The server did not store the budgets. Paste the latest Code.js into Apps Script, run setup(), then Deploy > Manage deployments > Edit > New version.');S.be=false;draw();toast('Budgets saved')}catch(e){alert(e.message)}},
+ 'budget':()=>{S.be=true;S.bdel=[];S.bv={};S.bn='';draw()},
+ 'budget-cancel':()=>{S.be=false;S.bdel=[];S.bv={};S.bn='';draw()},
+ // remember what is typed so far, so removing / undoing a category never wipes the other budget boxes
+ budGrab:()=>{cats().forEach((x,i)=>{const e=$('#bi'+i);if(e)S.bv[x]=e.value});const n=$('#bnew');if(n)S.bn=n.value},
+ 'bud-del':i=>{const c=cats(),x=c[Number(i)];if(x===undefined)return;ACT.budGrab();
+  const used=S.d.expenses.filter(e=>e.category===x).length;
+  if(used){alert('"'+x+'" is used by '+used+' expense'+(used===1?'':'s')+', so it cannot be removed. Change those expenses to another category first.');return}
+  if(c.length-(S.bdel||[]).length<=1){alert('Keep at least one category.');return}
+  S.bdel=(S.bdel||[]).concat(x);draw()},
+ 'bud-undo':i=>{const x=cats()[Number(i)];ACT.budGrab();S.bdel=(S.bdel||[]).filter(y=>y!==x);draw()},
+ 'budget-save':async()=>{const del=S.bdel||[],c=cats().filter(x=>!del.includes(x)),o={};
+  cats().forEach((x,i)=>{if(del.includes(x))return;const e=$('#bi'+i),v=Number(e?e.value:0);if(v>0)o[x]=v});
+  const nc=($('#bnew').value||'').trim().replace(/,/g,' '),nb=JSON.stringify(o),p={budget:nb};
+  const list=(nc&&!c.includes(nc))?c.concat(nc):c;
+  if(!list.length){alert('Keep at least one category.');return}
+  if(del.length||list.length!==c.length)p.categories=list.join(',');
+  try{await api('saveConfig',{cfg:p});await load();if(cfg().budget!==nb)throw new Error('The server did not store the budgets. Paste the latest Code.js into Apps Script, run setup(), then Deploy > Manage deployments > Edit > New version.');S.be=false;S.bdel=[];S.bv={};S.bn='';draw();toast('Budgets saved')}catch(e){alert(e.message)}},
  'add-exp':()=>expForm({date:today(),account:S.d.accounts[0]?.id,category:cats()[0]}),
  'edit-exp':id=>expForm(S.d.expenses.find(x=>x.id===id)),
  'add-acc':()=>ACT.accForm({}),'edit-acc':id=>ACT.accForm(S.d.accounts.find(a=>a.id===id)),
