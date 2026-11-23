@@ -264,6 +264,7 @@ async function poll(){
   if(LASTP!==null&&r.pending!==LASTP){const more=r.pending>LASTP;await load(true);if(more){ding();toast('New payment to verify','info')}}
  }catch(e){}
 }
+if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data&&e.data.go==='verify'&&S.u&&S.d&&can(1)){S.page='claims';load(true)}});
 setInterval(poll,30000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')poll()});
 function signOut(silent){$('#fab').hidden=true;if(!silent&&S.t)api('logout').catch(()=>{});S.t='';localStorage.removeItem('ivTok');S.d=null;$('#app').hidden=true;$('#login').hidden=false}
 
@@ -299,7 +300,7 @@ function draw(){
  $('#meN').textContent=S.u.name;$('#meR').textContent=S.u.role;
  drawNav();
  const pg=VIEWS[S.page]();
- $('#fab').hidden=!can(1);$('#pt').textContent=pg.title;$('#actions').innerHTML=pg.actions||'';$('#view').innerHTML=pg.html;S.rf=pg.rf||null;if(S.u.role==='student'&&S.page==='me')updPay();lbl();
+ $('#fab').hidden=!can(1);$('#pt').textContent=pg.title;$('#actions').innerHTML=pg.actions||'';$('#view').innerHTML=pg.html;S.rf=pg.rf||null;if(S.u.role==='student'&&S.page==='me')updPay();if(S.page==='set'&&S.u.role==='admin')pushStatus();lbl();
 }
 function sheet(html){const m=$('#modal');m.innerHTML=`<div class="sheet">${html}</div>`;m.classList.add('on')}
 function close(){if(S.lock)return;$('#modal').classList.remove('on')}
@@ -335,7 +336,17 @@ const BUD=()=>{const b=budget(),ed=S.be&&can(2),h=cats().map((c,i)=>{const p=Num
  return`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13.5px"><span>${esc(c)}</span>${right}</div>${ed?'':`<div class="prog" style="margin:5px 0 0"><i style="width:${Math.min(pc,100)}%;background:${o?'var(--bad)':pc>85?'var(--sun)':'var(--sea)'}"></i></div>${o?`<small style="color:var(--bad);font-weight:600">Over by ${inr(a-p)}</small>`:''}`}</div>`}).join('');
  const btns=!can(2)?'':ed?'<span style="display:flex;gap:8px"><button class="ghost" data-act="budget-cancel">Cancel</button><button class="pri" data-act="budget-save">Save budgets</button></span>':'<button class="ghost" data-act="budget">Edit budgets</button>';
  return`<div class="card" style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px;flex-wrap:wrap"><h3 style="margin:0">Budget vs actual</h3>${btns}</div>${h}${ed?'<label style="margin:14px 0 0">Add a category (optional)<input id="bnew" placeholder="e.g. Tips, Medical"></label>':''}</div>`};
-const notifCard=()=>{const t=cfg().ntfyTopic||'';return`<div class="card"><h3>Phone notifications</h3><p class="mut" style="margin-bottom:10px">Get an instant alert on your phone when a student submits a payment. Tap it to open Verify.</p><ol style="padding-left:18px;margin-bottom:12px;font-size:14px;display:grid;gap:4px"><li>Install the free <b>ntfy</b> app (Android or iPhone).</li><li>Tap <b>+</b> and subscribe to the topic below.</li><li>Press <b>Send test</b>.</li></ol><div style="background:var(--foam);border-radius:10px;padding:9px 12px;font-family:monospace;font-size:13px;word-break:break-all;margin-bottom:12px">${esc(t)||'No topic yet. Run setup() in Apps Script.'}</div><div class="row" style="justify-content:flex-start"><button class="ghost" data-act="n-test">Send test</button><button class="ghost" data-act="n-new">New topic</button></div><small class="mut" style="display:block;margin-top:10px">Keep the topic private, it works like a password. Alerts contain only the student's name and the amount.</small></div>`};
+const b64uToU8=s=>{s=s.replace(/-/g,'+').replace(/_/g,'/');s+='='.repeat((4-s.length%4)%4);const r=atob(s);return Uint8Array.from(r,c=>c.charCodeAt(0))};
+const pushOk=()=>'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window;
+const swReady=()=>Promise.race([navigator.serviceWorker.ready,new Promise((_,rj)=>setTimeout(()=>rj(new Error('The app is still starting. Wait a moment and try again.')),5000))]);
+async function pushStatus(){
+ const el=$('#pst');if(!el)return;
+ if(!pushOk()){el.textContent='Not available here. On iPhone, open the app from your Home Screen.';return}
+ if(Notification.permission==='denied'){el.textContent='Blocked. Allow notifications for this app in your phone or browser settings.';return}
+ try{const sub=await(await swReady()).pushManager.getSubscription();el.textContent=sub&&Notification.permission==='granted'?'On for this device ✓':'Off for this device'}catch(e){el.textContent='Off for this device'}
+}
+const pushCard=()=>`<div class="card"><h3>Push notifications</h3><p class="mut" style="margin-bottom:10px">Get an alert on this phone when a student submits a payment, even when the app is closed. Tap it to open Verify.</p><p id="pst" style="font-weight:600;margin-bottom:12px">Checking…</p><div class="row" style="justify-content:flex-start"><button class="pri" data-act="p-on">Turn on</button><button class="ghost" data-act="p-test">Send test</button><button class="ghost" data-act="p-off">Turn off</button></div><small class="mut" style="display:block;margin-top:10px">Turn it on once on each phone you use. On iPhone, add the app to your Home Screen first and do this from the installed app.</small></div>`;
+const notifCard=()=>{const t=cfg().ntfyTopic||'';return`<div class="card"><h3>Backup alerts (ntfy, optional)</h3><p class="mut" style="margin-bottom:10px">Get an instant alert on your phone when a student submits a payment. Tap it to open Verify.</p><ol style="padding-left:18px;margin-bottom:12px;font-size:14px;display:grid;gap:4px"><li>Install the free <b>ntfy</b> app (Android or iPhone).</li><li>Tap <b>+</b> and subscribe to the topic below.</li><li>Press <b>Send test</b>.</li></ol><div style="background:var(--foam);border-radius:10px;padding:9px 12px;font-family:monospace;font-size:13px;word-break:break-all;margin-bottom:12px">${esc(t)||'No topic yet. Run setup() in Apps Script.'}</div><div class="row" style="justify-content:flex-start"><button class="ghost" data-act="n-test">Send test</button><button class="ghost" data-act="n-new">New topic</button></div><small class="mut" style="display:block;margin-top:10px">Keep the topic private, it works like a password. Alerts contain only the student's name and the amount.</small></div>`};
 /* ---------- views ---------- */
 const VIEWS={
 dash(){
@@ -417,7 +428,7 @@ team(){
  <div class="tw"><table><thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Status</th><th></th></tr></thead><tbody id="tb">${rf()}</tbody></table></div>
  <p class="mut" style="margin-top:10px"><b>Admin</b>: everything, including deletes and team. <b>Editor</b>: add and edit people, payments, expenses. <b>Viewer</b>: read only. <b>Student</b>: sees only their own fee and pays by UPI.</p>`}},
 
-set(){const c=cfg();return{title:'Settings',html:`<div class="acc"><div class="card"><h3>Your account</h3><p class="mut" style="margin-bottom:12px">Signed in as ${esc(S.u.username)}</p><button class="ghost" data-act="pw">Change password</button></div><div class="card"><h3>Install the app</h3><p class="mut" style="margin-bottom:12px">Add it to your phone's home screen to open it like a normal app.</p><button class="ghost" data-act="install">Install on this phone</button></div><div class="card"><h3>Sound effects</h3><p class="mut" style="margin-bottom:12px">A chime on success and an alert for new payments.</p><button class="ghost" data-act="snd-toggle">Sound: ${SND()?'On':'Off'}</button></div>${can(2)?notifCard():''}
+set(){const c=cfg();return{title:'Settings',html:`<div class="acc"><div class="card"><h3>Your account</h3><p class="mut" style="margin-bottom:12px">Signed in as ${esc(S.u.username)}</p><button class="ghost" data-act="pw">Change password</button></div><div class="card"><h3>Install the app</h3><p class="mut" style="margin-bottom:12px">Add it to your phone's home screen to open it like a normal app.</p><button class="ghost" data-act="install">Install on this phone</button></div><div class="card"><h3>Sound effects</h3><p class="mut" style="margin-bottom:12px">A chime on success and an alert for new payments.</p><button class="ghost" data-act="snd-toggle">Sound: ${SND()?'On':'Off'}</button></div>${can(2)?pushCard()+notifCard():''}
  ${can(2)?`<div class="card"><h3>Trip details</h3><p class="mut">${esc(c.trip)} · ${esc(c.route)}<br>Default fee ${inr(c.fee)} per person<br>Dates: ${esc(c.start||'-')} to ${esc(c.end||'-')}<br>UPI: ${esc(c.upiId||'not set')}<br>Categories: ${esc(c.categories)}</p><div style="margin-top:12px"><button class="ghost" data-act="cfg">Edit trip details</button></div></div>`:''}</div>`}}
 };
 
@@ -456,6 +467,18 @@ const ACT={
  'mk-one':id=>form('Create login',[{l:'Starting password (min 6 characters)',k:'password',r:1}],{},async r=>{const res=await api('makeStudents',{password:r.password,who:'all',only:id});await load();setTimeout(()=>sheet(res.created.length?`<h3>Login created</h3><p style="margin:10px 0">Username: <b>${esc(res.created[0].username)}</b><br>Password: <b>${esc(r.password)}</b></p><p class="mut">They must choose their own password at first sign-in.</p><div class="row"><button class="ghost" data-close>Close</button></div>`:'<h3>No login created</h3><p class="mut">This person is cancelled or already has a login.</p><div class="row"><button class="ghost" data-close>Close</button></div>'),50)}),
  'install':()=>{if(DP){DP.prompt();DP=null}else alert('To install: on iPhone open this page in Safari, tap Share, then "Add to Home Screen". On Android tap the browser menu (three dots), then "Install app" or "Add to Home screen".')},
  'qr-toggle':()=>document.querySelector('.qrw').classList.toggle('on'),
+ 'p-on':async()=>{
+  try{
+   if(!pushOk())throw new Error('Push is not available here. On iPhone, open the app from your Home Screen.');
+   if(!cfg().vapidPublic)throw new Error('Push is not set up yet. Run setup() in Apps Script, deploy a new version, then reload.');
+   const perm=await Notification.requestPermission();
+   if(perm!=='granted')throw new Error('Notifications are blocked. Allow them in your phone or browser settings, then try again.');
+   const reg=await swReady();let sub=await reg.pushManager.getSubscription();
+   if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64uToU8(cfg().vapidPublic)});
+   await api('pushSub',{endpoint:sub.endpoint});pushStatus();toast('Push notifications are on','info');
+  }catch(e){alert(e.message)}},
+ 'p-test':async()=>{try{const r=await api('testPush');toast('Test sent. It should arrive in a moment.','info')}catch(e){alert(e.message)}},
+ 'p-off':async()=>{try{const sub=await(await swReady()).pushManager.getSubscription();if(sub){await api('pushUnsub',{endpoint:sub.endpoint});await sub.unsubscribe()}pushStatus();toast('Push notifications are off','info')}catch(e){alert(e.message)}},
  'snd-toggle':()=>{localStorage.ivSound=SND()?'off':'on';draw();if(SND())chime()},
  'n-test':async()=>{try{await api('testNotify');toast('Test sent. Check your phone.','info')}catch(e){alert(e.message)}},
  'n-new':async()=>{if(!confirm('Create a new topic? You must subscribe to the new one in the ntfy app.'))return;try{await api('newTopic');await load();toast('New topic created')}catch(e){alert(e.message)}},
