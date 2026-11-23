@@ -7,11 +7,10 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="IV Ledger">
 <title>Industrial Visit Ledger</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230d2b3e'/%3E%3Cpath d='M18 38a14 14 0 0 1 28 0z' fill='%23f2a33a'/%3E%3Cpath d='M8 44q6-5 12 0t12 0 12 0 12 0' stroke='%233fb5c2' stroke-width='3.5' fill='none' stroke-linecap='round'/%3E%3Cpath d='M8 52q6-5 12 0t12 0 12 0 12 0' stroke='%230f7c8a' stroke-width='3.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
-<meta name="theme-color" content="#0d2b3e">
+<meta name="theme-color" content="#f0f4f6">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -190,7 +189,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--sea);box-shadow:0 0 0
 .lbox{border-radius:26px;padding:38px 30px;animation:sheetUp .6s var(--ease) both}
 .lbox h1{font-size:29px}
 .lbox label{margin-bottom:16px}
-#login{background:radial-gradient(70% 50% at 85% 5%,rgba(242,163,58,.28),transparent 60%),linear-gradient(160deg,#0d2b3e 0%,#0f5f6e 62%,#0f7c8a 100%)}
+#login{background:radial-gradient(80% 45% at 50% 100%,rgba(15,124,138,.20),transparent 70%),radial-gradient(60% 35% at 100% 0%,rgba(242,163,58,.18),transparent 70%),#f0f4f6}
+.lbox{box-shadow:0 24px 60px -22px rgba(13,43,62,.32);border:1px solid #e3ebef}
 .fab{transition:transform .3s var(--ease),opacity .3s;box-shadow:0 12px 28px -6px rgba(0,0,0,.4)}
 .fab.hide{transform:translateY(130px) scale(.8);opacity:0;pointer-events:none}
 .mmenu{position:absolute;top:calc(100% + 6px);right:16px;min-width:210px;background:#fff;border-radius:18px;padding:8px;box-shadow:var(--sh2);border:1px solid var(--line);display:none;transform-origin:top right}
@@ -234,7 +234,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--sea);box-shadow:0 0 0
 }
 @media(prefers-reduced-motion:reduce){.enter>*,.lbox,#modal.on,#modal.on .sheet,.mmenu.on{animation:none!important}}
 /* ===== Bubble dock + solid dark top (status bar) ===== */
-html{background:#0d2b3e;min-height:100%}
+html{background:#f0f4f6;min-height:100%}
 body{min-height:100vh;min-height:100dvh;overscroll-behavior-y:none}
 #login{position:fixed;inset:0;min-height:0;overflow-y:auto;display:flex;overscroll-behavior:none;padding:calc(20px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom))}
 #login .lbox{margin:auto}
@@ -248,9 +248,7 @@ body{min-height:100vh;min-height:100dvh;overscroll-behavior-y:none}
 .mi.out{color:var(--bad);background:#fdf1ee}.mi.out .ic{color:var(--bad)}
 @media(max-width:860px){
  aside{display:none!important}
- .mbar{background:var(--ink);color:#fff;border-bottom:0;backdrop-filter:none;-webkit-backdrop-filter:none;padding-bottom:14px}
- .mbar .logo{box-shadow:none}.mbar .mt span{color:#8fb2c0}
- .mbar .av{background:var(--sun);color:#2a1a00;box-shadow:none}
+ .mbar{background:#f0f4f6;color:var(--ink);border-bottom:1px solid rgba(13,43,62,.07);backdrop-filter:none;-webkit-backdrop-filter:none;padding-bottom:12px}
  #dock{display:flex;position:fixed;left:14px;right:14px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:40;gap:2px;padding:6px;border-radius:28px;background:rgba(13,43,62,.95);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 18px 40px -10px rgba(7,24,36,.6),0 0 0 1px rgba(255,255,255,.07) inset;animation:sheetUp .5s var(--ease) both}
  #dock button{flex:1 1 0;min-width:0;min-height:56px;padding:6px 0 5px;border:0;border-radius:22px;background:none;color:#9dbccb;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-weight:600;transition:background .25s,color .25s,transform .25s var(--ease)}
  #dock button em{font-style:normal;font-size:10.5px;line-height:1;letter-spacing:.01em}
