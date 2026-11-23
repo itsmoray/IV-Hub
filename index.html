@@ -331,7 +331,7 @@ const cfg=()=>S.d.config;
 const cats=()=>(cfg().categories||'Miscellaneous').split(',').map(x=>x.trim()).filter(Boolean);
 const feeOf=p=>p.status==='Cancelled'?0:(Number(p.fee)||Number(cfg().fee)||0);
 const budget=()=>{try{return JSON.parse(cfg().budget||'{}')}catch(e){return{}}};
-const paidBy=id=>psum(S.d.payments.filter(x=>x.participantId===id));
+const paidBy=id=>(S.u&&S.u.role==='student')?psum(S.d.payments):psum(S.d.payments.filter(x=>x.participantId===id)); // student payload is already only their own payments and carries no participantId
 const accName=id=>(S.d.accounts.find(a=>a.id===id)||{name:'(deleted)'}).name;
 const uname=id=>((S.d.users||[]).find(u=>u.participantId===id)||{}).username||'';
 const loginBox=id=>{const u=(S.d.users||[]).find(x=>x.participantId===id);return`<div style="margin:10px 0 0;padding:10px 12px;background:var(--foam);border-radius:10px;font-size:13.5px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">${u?`<span>Login: <b>${esc(u.username)}</b> <span class="chip ${u.active==='Yes'?'c-ok':'c-no'}">${u.active==='Yes'?'Active':'Disabled'}</span></span><button class="ghost" style="padding:5px 12px" data-act="set-pw" data-id="${u.id}">Set new password</button>`:`<span class="mut">No login yet</span><button class="ghost" style="padding:5px 12px" data-act="mk-one" data-id="${id}">Create login</button>`}</div>`};
@@ -440,6 +440,7 @@ function drawNav(){
 }
 function draw(){
  if(S.u.role==='student'&&!['me','set'].includes(S.page))S.page='me';
+ else if(S.u.role!=='student'&&S.page==='me')S.page='dash'; // page left over from a student session has no data for staff
  const c=cfg();$('#brand').textContent=c.trip||'Industrial Visit';$('#route').textContent=c.route||'';
  $('#meN').textContent=S.u.name;$('#meR').textContent=S.u.role;
  $('#mbT').textContent=c.trip||'Industrial Visit';$('#mbS').textContent=S.u.name+' · '+S.u.role;$('#mmN').textContent=S.u.name;$('#mmR').textContent=S.u.role;$('#mAv').textContent=(S.u.name||'?').trim().charAt(0).toUpperCase();
