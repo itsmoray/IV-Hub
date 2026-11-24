@@ -1,8 +1,8 @@
-/* Industrial Visit Ledger - service worker.
+/* IV Hub - service worker.
    1) Keeps the app shell available and ALWAYS goes to the network first, so updates show up
       straight away. Money data comes from Google Apps Script (another origin) and is never cached.
    2) Shows a notification when the server pushes "a student submitted a payment". */
-const C = 'iv-ledger-v2';
+const C = 'iv-hub-v1'; // new name also clears the old cached icons
 const SHELL = ['./', 'index.html', 'manifest.json', 'icon-192.png', 'icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(C).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
