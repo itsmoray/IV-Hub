@@ -1,7 +1,7 @@
 {
-  "name": "Industrial Visit Ledger",
-  "short_name": "IV Ledger",
-  "description": "Industrial visit payments, expenses and accounts",
+  "name": "IV Hub",
+  "short_name": "IV Hub",
+  "description": "Industrial visit payments, trip details and updates for students and organisers",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
