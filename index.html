@@ -520,6 +520,20 @@ function form(title,fields,v,save,opt={}){
 }
 const saveRec=async(sh,rec)=>{await api('save',{sheet:sh,rec});await load()};
 const delRec=(sh,id)=>async()=>{await api('del',{sheet:sh,id});await load()};
+// Reads pasted people: from Excel (tab separated) or typed (comma separated). Name first; then Age, Gender (Male/Female/Boy/Girl), Class, Phone in any order.
+function parsePeople(txt){
+ return String(txt||'').split(/\r?\n/).map(l=>l.split(/\t|,/).map(x=>x.trim()).filter(x=>x!=='')).filter(a=>a.length)
+  .filter(a=>!/^(s\.?\s*no\.?|sl\.?\s*no\.?|sno|name|student name|names)$/i.test(a[0])&&!a.some(x=>/^(age|gender|sex)$/i.test(x))) // skip the header row
+  .map(a=>{if(a.length>1&&/^\d+$/.test(a[0]))a=a.slice(1); // drop a serial-number column
+   const o={name:a[0],class:'',phone:'',gender:'',age:''};
+   a.slice(1).forEach(x=>{
+    if(/^(m|male|boy)$/i.test(x))o.gender='Boy';
+    else if(/^(f|female|girl)$/i.test(x))o.gender='Girl';
+    else if(/^\d{1,2}$/.test(x)&&!o.age&&Number(x)>=10&&Number(x)<=80)o.age=x;
+    else if(/^[+\d][\d\s-]{8,}$/.test(x)&&!o.phone)o.phone=x;
+    else if(!o.class)o.class=x;
+   });
+   return o})}
 function copyText(t){t=String(t);const fb=()=>{const i=document.createElement('textarea');i.value=t;document.body.appendChild(i);i.select();try{document.execCommand('copy');toast('Copied')}catch(e){}i.remove()};navigator.clipboard?navigator.clipboard.writeText(t).then(()=>toast('Copied'),fb):fb()}
 function printHTML(html){
  let r=$('#rcp');if(!r){r=document.createElement('div');r.id='rcp';document.body.appendChild(r)}
@@ -695,8 +709,8 @@ const ACT={
   <div class="row" style="margin-top:14px">${can(2)?`<button class="danger" data-act="del-person" data-id="${id}" style="margin-right:auto">Delete</button>`:''}<button class="ghost" data-close>Close</button>${can(1)?`<button class="ghost" data-act="edit-person" data-id="${id}">Edit</button>${p.phone&&feeOf(p)>paidBy(id)?`<button class="ghost" data-act="wa-rem" data-id="${id}">Remind</button>`:''}<button class="ghost" data-act="add-ref" data-id="${id}">Refund</button><button class="pri" data-act="add-pay" data-id="${id}">Record payment</button>`:''}</div>`)},
  'edit-person':id=>{const p=S.d.participants.find(x=>x.id===id);form('Edit person',personF,p,r=>saveRec('Participants',{...p,...r}))},
  'del-person':async id=>{if(!confirm('Delete this person?'))return;try{await delRec('Participants',id)();close();toast('Deleted')}catch(e){alert(e.message)}},
- 'bulk':()=>form('Bulk add people',[{l:'One person per line: Name, Class, Phone',k:'t',t:'textarea'},{l:'Type',k:'type',t:'select',o:[['Student','Student'],['Faculty','Faculty']]}],{},async r=>{
-  const names=r.t.split('\n').map(l=>l.split(',').map(x=>x.trim())).filter(a=>a[0]).map(a=>({name:a[0],class:a[1]||'',phone:a[2]||'',type:r.type}));
+ 'bulk':()=>form('Bulk add people',[{l:'One person per line, or paste straight from Excel: Name, Age, Gender (class and phone are optional)',k:'t',t:'textarea'},{l:'Type',k:'type',t:'select',o:[['Student','Student'],['Faculty','Faculty']]}],{},async r=>{
+  const names=parsePeople(r.t).map(n=>({...n,type:r.type}));
   if(!names.length)throw new Error('Paste at least one name');const res=await api('bulk',{names});await load();toast(res.added+' added'+(res.skipped?', '+res.skipped+' already existed':''))}),
  'add-pay':id=>payForm({participantId:id,date:today(),account:S.d.accounts[0]?.id,mode:'UPI'}),
  'edit-pay':id=>payForm(S.d.payments.find(x=>x.id===id)),
@@ -707,13 +721,13 @@ const ACT={
  'csv-cred':()=>csv('student-logins',[['Name',x=>x.name],['Username',x=>x.username],['Password',x=>x.password]],S.cred||[]),
  'replace-list':()=>{const stu=S.d.participants.filter(p=>p.type==='Student'),ids=new Set(stu.map(p=>p.id)),pays=S.d.payments.filter(x=>ids.has(x.participantId)),ptot=pays.reduce((a,x)=>a+(x.kind==='refund'?-1:1)*Number(x.amount||0),0);
   form('Replace student list',[
-   {l:'<span style="font-weight:400">This <b>deletes all '+stu.length+' students</b>, their logins and payment claims'+(pays.length?', and can delete their <b>'+pays.length+' payments ('+inr(ptot)+')</b>':'')+'. Faculty are not touched. The new students and their logins are then created automatically. A backup CSV downloads first.</span><br><br>New list, one person per line: Name, Class, Phone (optional: Boy or Girl as 4th item)',k:'t',t:'textarea'},
+   {l:'<span style="font-weight:400">This <b>deletes all '+stu.length+' students</b>, their logins and payment claims'+(pays.length?', and can delete their <b>'+pays.length+' payments ('+inr(ptot)+')</b>':'')+'. Faculty are not touched. The new students and their logins are then created automatically. A backup CSV downloads first.</span><br><br>New list: paste straight from Excel (Name, Age, Gender columns) or type one person per line. Male / Female / Boy / Girl all work. Class and phone are optional.',k:'t',t:'textarea'},
    {l:'Common starting password for the new logins (min 6 characters)',k:'password',r:1},
    ...(pays.length?[{l:'Their '+pays.length+' payments',k:'wp',t:'select',o:[['no','Keep them (then replacing is stopped)'],['yes','Delete them too']]}]:[]),
    {l:'Type REPLACE to confirm',k:'ok',r:1}
   ],{wp:'no'},async r=>{
    if(String(r.ok).trim().toUpperCase()!=='REPLACE')throw new Error('Type REPLACE to confirm');
-   const names=String(r.t||'').split('\n').map(l=>l.split(',').map(x=>x.trim())).filter(a=>a[0]).map(a=>({name:a[0],class:a[1]||'',phone:a[2]||'',gender:/^girl$/i.test(a[3]||'')?'Girl':/^boy$/i.test(a[3]||'')?'Boy':''}));
+   const names=parsePeople(r.t);
    if(!names.length)throw new Error('Paste at least one name for the new list');
    if(names.length>300)throw new Error('Maximum 300 names at a time');
    if(String(r.password).length<6)throw new Error('Password must be at least 6 characters');
