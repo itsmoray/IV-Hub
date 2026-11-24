@@ -563,9 +563,69 @@ function receiptHTML(pay,p){
  <h4>Account status</h4><div class="kv"><span>Trip fee</span><b>${inr(f)}</b></div><div class="kv"><span>Total paid</span><b>${inr(x)}</b></div><div class="kv"><span>Balance due</span><b style="color:${bal>0?'#d9482b':'#1b9a62'}">${inr(bal)}</b></div>
  <div class="note">Computer generated receipt. Balance shown as on ${new Date().toLocaleDateString('en-IN')}.</div></div>`;
 }
+
+/* ===== WhatsApp receipt message + real PDF (works on phones; print() does not) ===== */
+function rcptNice(d){try{const t=new Date(String(d).slice(0,10)+'T00:00:00');if(isNaN(t))return String(d||'');return t.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}catch(e){return String(d||'')}}
+function rcptMsg(pay,p){
+ const f=feeOf(p),x=paidBy(p.id),bal=Math.max(f-x,0),trip=cfg().trip||'Industrial Visit',first=String(p.name||'').trim().split(/\s+/)[0]||'there';
+ const pct=f>0?Math.max(0,Math.min(100,Math.round(x/f*100))):0,fill=Math.round(pct/10),bar='▰'.repeat(fill)+'▱'.repeat(10-fill);
+ const L=['✅ *Payment Received!*','',`Hi *${first}* 👋`,`Your payment for *${trip}* is verified and added to your account.`,''];
+ if(cfg().route)L.push(`📍 ${cfg().route}`,'');
+ L.push('🧾 *Receipt*',`• No: ${String(pay.id).toUpperCase()}`,`• Amount: *${inr(pay.amount)}*`,`• Date: ${rcptNice(pay.date)}`,`• Mode: ${pay.mode||'UPI'}${pay.ref?' (Ref '+pay.ref+')':''}`,'',
+  '📊 *Your account*',`• Trip fee: ${inr(f)}`,`• Total paid: ${inr(x)}`,`• Balance: *${inr(bal)}*`,`${bar}  ${pct}%`,'');
+ L.push(bal>0?`Whenever you're ready, the remaining ${inr(bal)} can be paid in the app. 🙏`:`🎉 *Fully paid!* You're all set for the trip.`,'',
+  'Thank you for the quick payment! Get ready for a great trip 🚌✨','_- IV Hub Organisers_');
+ return L.join('\n');
+}
+function rcptPdfBlob(pay,p){
+ const f=feeOf(p),x=paidBy(p.id),bal=Math.max(f-x,0),trip=cfg().trip||'Industrial Visit';
+ const W=1240,H=1754,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
+ const FN="'Figtree','Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+ const T=(t,xx,y,sz,wt,col,al)=>{g.font=`${wt} ${sz}px ${FN}`;g.fillStyle=col;g.textAlign=al||'left';g.fillText(String(t),xx,y)};
+ const fit=(t,max,sz,wt)=>{t=String(t);g.font=`${wt} ${sz}px ${FN}`;while(t.length>3&&g.measureText(t).width>max)t=t.slice(0,-2);return t};
+ g.fillStyle='#fff';g.fillRect(0,0,W,H);
+ g.fillStyle='#0d2b3e';g.fillRect(0,0,W,230);g.fillStyle='#f2a33a';g.fillRect(0,230,W,10);
+ T(fit(trip,W-420,60,700),80,112,60,700,'#fff');
+ T('PAYMENT RECEIPT'+(cfg().route?'  ·  '+cfg().route:''),80,172,28,600,'#9fd6dd');
+ T('Receipt no.',W-80,100,24,500,'#9fd6dd','right');T(String(pay.id).toUpperCase(),W-80,148,36,700,'#fff','right');
+ T('RECEIVED FROM',80,330,24,700,'#0f7c8a');
+ T(fit(p.name||'',W-160,50,700),80,392,50,700,'#0d2b3e');
+ T([p.type,p.class].filter(Boolean).join(' · '),80,436,28,500,'#5f7686');
+ g.fillStyle='#eaf6f7';g.fillRect(80,490,W-160,190);g.fillStyle='#0f7c8a';g.fillRect(80,490,12,190);
+ T('AMOUNT PAID',130,545,24,700,'#0f7c8a');T(inr(pay.amount),130,640,92,800,'#0d2b3e');
+ let y=770;const row=(a,b,col)=>{T(a,80,y,30,500,'#5f7686');T(fit(b,W-480,32,700),W-80,y,32,700,col||'#0d2b3e','right');g.fillStyle='#e5edf0';g.fillRect(80,y+22,W-160,2);y+=78};
+ row('Date',rcptNice(pay.date));row('Payment mode',pay.mode||'UPI');if(pay.ref)row('Transaction ID',pay.ref);
+ y+=30;T('ACCOUNT STATUS',80,y,24,700,'#0f7c8a');y+=62;
+ row('Trip fee',inr(f));row('Total paid',inr(x));row('Balance due',inr(bal),bal>0?'#d9482b':'#1b9a62');
+ const pct=f>0?Math.max(0,Math.min(1,x/f)):0;y+=6;g.fillStyle='#e5edf0';g.fillRect(80,y,W-160,22);g.fillStyle=bal>0?'#f2a33a':'#1b9a62';g.fillRect(80,y,(W-160)*pct,22);
+ T(bal>0?Math.round(pct*100)+'% paid':'Fully paid ✓',80,y+66,28,700,bal>0?'#5f7686':'#1b9a62');
+ T('Computer generated receipt. Balance shown as on '+new Date().toLocaleDateString('en-IN')+'.',W/2,H-90,24,500,'#5f7686','center');
+ g.fillStyle='#0f7c8a';g.fillRect(0,H-30,W,30);
+ // wrap the JPEG in a minimal single-page A4 PDF
+ const b64=c.toDataURL('image/jpeg',.92).split(',')[1],bin=atob(b64),jpg=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)jpg[i]=bin.charCodeAt(i);
+ const enc=new TextEncoder(),parts=[],off=[];let len=0;const add=d=>{const u=typeof d==='string'?enc.encode(d):d;parts.push(u);len+=u.length};
+ const obj=(n,body)=>{off[n]=len;add(n+' 0 obj\n'+body+'\nendobj\n')};
+ add('%PDF-1.4\n');obj(1,'<< /Type /Catalog /Pages 2 0 R >>');obj(2,'<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+ obj(3,'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>');
+ off[4]=len;add(`4 0 obj\n<< /Type /XObject /Subtype /Image /Width ${W} /Height ${H} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpg.length} >>\nstream\n`);add(jpg);add('\nendstream\nendobj\n');
+ const cs='q 595 0 0 842 0 0 cm /Im0 Do Q';obj(5,`<< /Length ${cs.length} >>\nstream\n${cs}\nendstream`);
+ const xr=len;let xs='xref\n0 6\n0000000000 65535 f \n';for(let i=1;i<=5;i++)xs+=String(off[i]).padStart(10,'0')+' 00000 n \n';
+ add(xs+`trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xr}\n%%EOF`);
+ return new Blob(parts,{type:'application/pdf'});
+}
+function rcptFileName(pay,p){return 'Receipt-'+String(p.name||'student').replace(/[^\w]+/g,'-').replace(/^-+|-+$/g,'').slice(0,30)+'-'+String(pay.id).toUpperCase()+'.pdf'}
+function savePdfBlob(blob,name){const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000)}
+async function rcptShare(pay,p,withMsg){
+ let blob,name;try{blob=rcptPdfBlob(pay,p);name=rcptFileName(pay,p)}catch(e){toast('Could not create the PDF','err');return}
+ const file=new File([blob],name,{type:'application/pdf'}),data={files:[file],title:'Payment receipt'};if(withMsg)data.text=rcptMsg(pay,p);
+ try{if(navigator.canShare&&navigator.canShare(data)){await navigator.share(data);return}}catch(e){if(e&&e.name==='AbortError')return}
+ // browser cannot share files: save the PDF, and open the WhatsApp chat with the message ready
+ savePdfBlob(blob,name);
+ if(withMsg&&p.phone){toast('PDF saved. Attach it in the WhatsApp chat','info');setTimeout(()=>wa(p,rcptMsg(pay,p)),700)}else toast('PDF saved')
+}
 function offerRcpt(pid){setTimeout(()=>{
  const p=S.d.participants.find(x=>x.id===pid),l=S.d.payments.filter(x=>x.participantId===pid&&x.kind!=='refund'),pay=l[l.length-1];if(!p||!pay)return;
- sheet(`<h3>Payment approved ✓</h3><p class="mut" style="margin-bottom:14px">${esc(p.name)} · ${inr(pay.amount)} added. Send a receipt?</p><div class="row" style="flex-direction:column">${p.phone?`<button class="pri" data-act="wa-rcpt" data-id="${pay.id}">Send WhatsApp receipt</button>`:'<p class="mut">No phone number saved for this person.</p>'}<button class="ghost" data-act="rcpt" data-id="${pay.id}">View / save as PDF</button><button class="ghost" data-close>Skip</button></div>`)},450)}
+ sheet(`<h3>Payment approved ✓</h3><p class="mut" style="margin-bottom:14px">${esc(p.name)} · ${inr(pay.amount)} added. Send a receipt?</p><div class="row" style="flex-direction:column"><button class="pri" data-act="wa-pdf" data-id="${pay.id}">Share receipt PDF + message</button>${p.phone?`<button class="ghost" data-act="wa-rcpt" data-id="${pay.id}">WhatsApp message only</button>`:'<p class="mut">No phone number saved for this person.</p>'}<button class="ghost" data-act="rcpt" data-id="${pay.id}">View receipt</button><button class="ghost" data-close>Skip</button></div>`)},450)}
 function reportData(){
  const d=S.d,P=d.participants,col=psum(d.payments),spent=sum(d.expenses),exp=P.reduce((a,p)=>a+feeOf(p),0);
  const cat=cats().map(c=>[c,sum(d.expenses.filter(x=>x.category===c))]),known=cat.reduce((a,x)=>a+x[1],0);if(spent-known>0.5)cat.push(['Other',spent-known]);
@@ -792,7 +852,7 @@ const ACT={
  'upi-manual':()=>{const c=S.d.config,e=$('#pa'),a=Math.round((e?Number(e.value)||0:0)*100)/100;
   sheet(`<h3>Pay to UPI ID</h3><p class="mut" style="margin-bottom:14px">Open any UPI app (Google Pay, PhonePe, Paytm…), choose <b>Pay to UPI ID</b> and enter these details.</p><div class="mlist"><div class="rm"><div><small class="mut">UPI ID</small><br><b>${esc(c.upiId)}</b>${c.upiName?`<br><small class="mut">${esc(c.upiName)}</small>`:''}</div><button class="ghost" style="min-height:38px" data-act="copy-txt" data-id="${esc(c.upiId)}">Copy</button></div>${a>0?`<div class="rm"><div><small class="mut">Amount</small><br><b>${inr(a)}</b></div><button class="ghost" style="min-height:38px" data-act="copy-txt" data-id="${a}">Copy</button></div>`:''}</div><p class="mut" style="margin-bottom:14px">After paying, come back here and enter the transaction ID under “I have paid”.</p><div class="row"><button class="pri" data-close>Done</button></div>`)},
  'rcpt':id=>{const pay=S.d.payments.find(x=>x.id===id);if(!pay)return;const p=S.d.me||S.d.participants.find(q=>q.id===pay.participantId);
-  sheet(`${receiptHTML(pay,p)}<div class="row" style="margin-top:16px"><button class="ghost" data-close>Close</button><button class="pri" id="rp">Save as PDF / Print</button></div>`);$('#rp').onclick=()=>printHTML(receiptHTML(pay,p))},
+  sheet(`${receiptHTML(pay,p)}<div class="row" style="margin-top:16px"><button class="ghost" data-close>Close</button><button class="ghost" id="rpw">Share</button><button class="pri" id="rp">Save PDF</button></div>`);$('#rp').onclick=()=>{try{savePdfBlob(rcptPdfBlob(pay,p),rcptFileName(pay,p));toast('PDF saved')}catch(e){toast('Could not create the PDF','err')}};$('#rpw').onclick=()=>rcptShare(pay,p,!S.d.me)},
  'remind-list':()=>{const l=S.d.participants.filter(p=>p.status!=='Cancelled'&&feeOf(p)>paidBy(p.id)).map(p=>({p,due:feeOf(p)-paidBy(p.id)})).sort((a,b)=>b.due-a.due),tot=l.reduce((a,x)=>a+x.due,0);
   sheet(`<h3>Remind unpaid</h3><p class="mut" style="margin-bottom:12px">${l.length} ${l.length===1?'person owes':'people owe'} ${inr(tot)}. Tap Send to open WhatsApp with the message ready.</p><div class="mlist">${l.map(x=>`<div class="rm"><div><b>${esc(x.p.name)}</b><br><small class="mut">${esc(x.p.class||x.p.type)} · due ${inr(x.due)}</small></div>${x.p.phone?`<button class="pri" style="min-height:38px;padding:6px 18px" data-act="rm-send" data-id="${x.p.id}">Send</button>`:'<small class="mut">No phone</small>'}</div>`).join('')||'<p class="mut">Everyone has paid. 🎉</p>'}</div><div class="row"><button class="ghost" data-close>Close</button></div>`)},
  'rm-send':id=>{ACT['wa-rem'](id);const b=document.querySelector(`[data-act="rm-send"][data-id="${id}"]`);if(b){b.textContent='Sent ✓';b.classList.remove('pri');b.classList.add('ghost')}},
@@ -806,7 +866,8 @@ const ACT={
  'final-csv':()=>{const{col,spent,exp,cat,accs}=reportData();const r=[['Summary','Total expected',exp],['Summary','Collected',col],['Summary','Still to collect',Math.max(exp-col,0)],['Summary','Total spent',spent],['Summary','Money in hand',col-spent]];
   accs.forEach(a=>{r.push(['Account received',a[0],a[1]],['Account spent',a[0],a[2]],['Account balance',a[0],a[3]])});cat.forEach(c=>r.push(['Spent by category',c[0],c[1]]));csv('final-accounts',[['Section',x=>x[0]],['Item',x=>x[1]],['Amount',x=>x[2]]],r)},
  'wa-rem':id=>{const p=S.d.participants.find(x=>x.id===id);wa(p,`Hi ${p.name}, a reminder for ${cfg().trip}: fee ${inr(feeOf(p))}, paid ${inr(paidBy(id))}, pending ${inr(feeOf(p)-paidBy(id))}. Please pay at the earliest. Thank you!`)},
- 'wa-rcpt':id=>{const x=S.d.payments.find(y=>y.id===id),p=S.d.participants.find(q=>q.id===x.participantId);wa(p,`Receipt - ${cfg().trip}\nReceived ${inr(x.amount)} from ${p.name} on ${x.date} (${x.mode}${x.ref?', ref '+x.ref:''}).\nTotal paid: ${inr(paidBy(p.id))} | Balance: ${inr(Math.max(feeOf(p)-paidBy(p.id),0))}\nThank you!`)},
+ 'wa-rcpt':id=>{const x=S.d.payments.find(y=>y.id===id),p=S.d.participants.find(q=>q.id===x.participantId);wa(p,rcptMsg(x,p))},
+ 'wa-pdf':id=>{const x=S.d.payments.find(y=>y.id===id),p=S.d.participants.find(q=>q.id===x.participantId);if(x&&p)rcptShare(x,p,true)},
  'add-tr':()=>ACT.trForm({date:today(),from:S.d.accounts[0]?.id,to:S.d.accounts[1]?.id||S.d.accounts[0]?.id}),
  'edit-tr':id=>ACT.trForm(S.d.transfers.find(x=>x.id===id)),
  trForm:v=>form(v.id?'Edit transfer':'Transfer money',[{l:'From account',k:'from',t:'select',o:accOpts()},{l:'To account',k:'to',t:'select',o:accOpts()},{l:'Amount (₹)',k:'amount',t:'number',r:1},{l:'Date',k:'date',t:'date',r:1},{l:'Note',k:'note'}],v,r=>saveRec('Transfers',{...v,...r}),{del:v.id&&can(2)?delRec('Transfers',v.id):null}),
