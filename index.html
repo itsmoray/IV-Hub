@@ -277,6 +277,13 @@ body{min-height:100vh;min-height:100dvh;overscroll-behavior-y:none}
 @media print{body.prt>*:not(#rcp){display:none!important}body.prt #rcp{display:block}body.prt{background:#fff!important}#rcp tr{break-inside:avoid}}
 @media print{aside,.mbar,#dock,#actions,.tools,#modal{display:none!important}#app{display:block}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+.ob-bar{height:6px;background:var(--line);border-radius:99px;overflow:hidden;margin-bottom:10px}.ob-bar i{display:block;height:100%;background:var(--sea);border-radius:99px;transition:width .3s}
+.ob-step{font-size:12.5px;font-weight:700;color:var(--sea);margin-bottom:6px}
+.ob-q{font-weight:600;font-size:13px;color:var(--mut);margin-bottom:6px}
+.ob-opts{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.ob-opts button{background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:9px 18px;font-weight:600}
+.ob-opts button.on{background:var(--foam);border-color:var(--sea);color:var(--sea)}
+.ob-sum{display:grid;grid-template-columns:auto 1fr;gap:7px 16px;font-size:14px;background:var(--foam);padding:14px 16px;border-radius:12px;margin-bottom:12px}.ob-sum span{color:var(--mut)}.ob-sum b{word-break:break-word}
 </style>
 </head>
 <body>
@@ -344,7 +351,7 @@ const SND=()=>localStorage.ivSound!=='off';
 function tone(seq){if(!SND())return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();let t=AC.currentTime+.02;seq.forEach(([f,d])=>{const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.16,t+.02);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d+.05);t+=d*.8})}catch(e){}}
 const chime=()=>tone([[659,.12],[880,.12],[1175,.3]]),ding=()=>tone([[988,.14],[1319,.14],[988,.14],[1319,.34]]);
 const toast=(m,t)=>{const e=$('#toast');e.className=t||'';e.innerHTML='<span class="ti">'+(t==='err'?'!':t==='info'?'🔔':'✓')+'</span><span>'+esc(m)+'</span>';void e.offsetWidth;e.classList.add('on');if(!t)chime();clearTimeout(TT);TT=setTimeout(()=>e.classList.remove('on'),t==='info'?5000:2600)};
-const LBL={login:'Signing in…',load:'Loading…',firstInfo:'Loading…',del:'Deleting…',decideAll:'Approving payments…',replaceStudents:'Replacing student list…'};
+const LBL={login:'Signing in…',load:'Loading…',profileInfo:'Loading…',saveProfile:'Saving…',del:'Deleting…',decideAll:'Approving payments…',replaceStudents:'Replacing student list…'};
 let NB=0,BT=null,BH=null,Q=Promise.resolve();
 const LOCKS=['#app','#login','#modal'];
 function busy(on,lbl){
@@ -405,16 +412,58 @@ document.addEventListener('click',e=>{if(!e.target.closest('#mMenu'))$('#mMenu')
 $('#mOut').onclick=()=>{$('#mMenu').classList.remove('on');signOut()};
 let LP='',LY=0;addEventListener('scroll',()=>{const y=scrollY;$('#fab').classList.toggle('hide',y>LY&&y>80);LY=y},{passive:true});
 async function start(){
- try{await load()}catch(e){if(/new password/i.test(e.message)){forcePw();return}throw e}
+ try{await load()}catch(e){if(/profile first/i.test(e.message)){onboard();return}if(/new password/i.test(e.message)){forcePw();return}throw e}
  if(location.hash==='#verify'&&can(1)){S.page='claims';history.replaceState(null,'',location.pathname+location.search);draw()}
  if(S.u.role==='admin'&&!cfg().appUrl&&location.protocol==='https:')api('saveConfig',{cfg:{appUrl:location.origin+location.pathname}},true).then(()=>load(true)).catch(()=>{});
  $('#login').hidden=true;$('#app').hidden=false;
 }
-async function forcePw(){S.lock=true;$('#app').hidden=true;$('#login').hidden=false;
- let ask=false,ph='';try{const i=await api('firstInfo');ask=!!(i&&i.ask);ph=(i&&i.phone)||''}catch(e){} // students are also asked for their WhatsApp number; if this lookup fails the form is the old one
- const fl=[{l:'Current password (the one you were given)',k:'old',t:'password',r:1},{l:'New password (min 6 characters)',k:'pw',t:'password',r:1}];
- if(ask)fl.push({l:'Your WhatsApp number <span style="font-weight:400">(10 digits, used for fee reminders)</span>',k:'phone',t:'tel',r:1,p:'e.g. 9876543210'});
- form(ask?'Set your password and WhatsApp number':'Set your own password',fl,{phone:ph},async r=>{await api('changePassword',r);S.lock=false;await start()})}
+// First-login questions for students (shown before the "set your own password" step).
+async function onboard(){
+ S.lock=true;$('#app').hidden=true;$('#login').hidden=false;
+ let p={};try{p=(await api('profileInfo'))||{}}catch(e){}
+ const v={age:p.age||'',gender:(p.gender==='Boy'||p.gender==='Girl')?p.gender:'',phone:p.phone||'',gName:p.guardianName||'',gPhone:p.guardianPhone||'',bg:p.bloodGroup||'',food:p.food||'',med:p.medical||''};
+ const first=String(p.name||'').trim().split(' ')[0]||'there',N=4,TT=['About you','Contact','Health & food','Check'];
+ let n=0,err='';
+ const cl=x=>{let d=String(x||'').replace(/\D/g,'');if(d.length===12&&d.startsWith('91'))d=d.slice(2);else if(d.length===11&&d[0]==='0')d=d.slice(1);return/^[6-9]\d{9}$/.test(d)?d:''};
+ const chips=(k,o)=>`<div class="ob-opts">${o.map(x=>`<button type="button" data-k="${k}" data-v="${esc(x)}" class="${v[k]===x?'on':''}">${esc(x)}</button>`).join('')}</div>`;
+ const inp=(k,l,t,ph,m)=>`<label>${l}<input data-f="${k}" type="${t}" value="${esc(v[k])}" placeholder="${esc(ph||'')}" ${m||''}></label>`;
+ const body=[
+  ()=>`<p class="mut" style="margin-bottom:14px">Hi ${esc(first)}! Answer a few quick questions once. We keep them safely, so you never have to fill them in again.</p>`+inp('age','Your age','number','e.g. 19','min="10" max="80" inputmode="numeric"')+`<div class="ob-q">Gender</div>`+chips('gender',['Boy','Girl']),
+  ()=>`<p class="mut" style="margin-bottom:14px">Used for fee reminders and for emergencies during the trip.</p>`+inp('phone','Your WhatsApp number','tel','e.g. 9876543210','inputmode="tel"')+inp('gName',"Parent / guardian's name",'text','Full name','autocomplete="off"')+inp('gPhone',"Parent / guardian's phone number",'tel','e.g. 9447000000','inputmode="tel"'),
+  ()=>`<div class="ob-q">Blood group</div>`+chips('bg',['A+','A-','B+','B-','O+','O-','AB+','AB-','Not sure'])+`<div class="ob-q">Food preference</div>`+chips('food',['Veg','Non-veg'])+inp('med','Allergies or medical conditions','text','Write None if there is nothing','maxlength="200" autocomplete="off"'),
+  ()=>`<p class="mut" style="margin-bottom:12px">Please check your answers. If something is wrong, go Back and fix it.</p><div class="ob-sum"><span>Age</span><b>${esc(v.age)}</b><span>Gender</span><b>${esc(v.gender)}</b><span>WhatsApp</span><b>${esc(cl(v.phone))}</b><span>Guardian</span><b>${esc(v.gName)}</b><span>Guardian phone</span><b>${esc(cl(v.gPhone))}</b><span>Blood group</span><b>${esc(v.bg)}</b><span>Food</span><b>${esc(v.food)}</b><span>Medical</span><b>${esc(v.med)}</b></div><p class="mut" style="font-size:13px">If you were given a temporary password, you will choose your own next.</p>`];
+ const chk=[
+  ()=>{const a=Number(v.age);if(!(a>=10&&a<=80))return'Please enter your age (10 to 80).';if(!v.gender)return'Please choose Boy or Girl.'},
+  ()=>{const ph=cl(v.phone);if(!ph)return'Enter a valid 10-digit WhatsApp number.';if(v.gName.length<2)return"Enter your parent's or guardian's name.";const gp=cl(v.gPhone);if(!gp)return"Enter a valid 10-digit phone number for your guardian.";if(gp===ph)return"Your guardian's number must be different from yours."},
+  ()=>{if(!v.bg)return'Please choose your blood group.';if(!v.food)return'Please choose Veg or Non-veg.';if(!v.med)return'Write "None" if you have no allergies or medical conditions.'},
+  ()=>''];
+ const grab=()=>$('#modal').querySelectorAll('[data-f]').forEach(e=>{v[e.dataset.f]=e.value.trim()});
+ const draw=()=>{
+  sheet(`<div class="ob-bar"><i style="width:${(n+1)/N*100}%"></i></div><div class="ob-step">Step ${n+1} of ${N} · ${TT[n]}</div><h3>${n===N-1?'All set?':'Quick details'}</h3>${body[n]()}<div class="err">${esc(err)}</div><div class="row">${n?'<button type="button" class="ghost" id="ob-b">Back</button>':''}<button type="button" class="pri" id="ob-n">${n===N-1?'Save and continue':'Next'}</button></div>`);
+  const m=$('#modal');
+  m.querySelectorAll('.ob-opts button').forEach(b=>b.onclick=()=>{v[b.dataset.k]=b.dataset.v;b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));m.querySelector('.err').textContent=''});
+  m.querySelectorAll('[data-f]').forEach(e=>e.onkeydown=ev=>{if(ev.key==='Enter'){ev.preventDefault();$('#ob-n').click()}});
+  if($('#ob-b'))$('#ob-b').onclick=()=>{grab();err='';n--;draw()};
+  $('#ob-n').onclick=async()=>{
+   grab();const e1=chk[n]();
+   if(e1){err=e1;m.querySelector('.err').textContent=e1;return}
+   err='';
+   if(n<N-1){n++;draw();return}
+   const b=$('#ob-n');b.disabled=true;
+   try{
+    await api('saveProfile',{rec:{age:v.age,gender:v.gender,phone:v.phone,guardianName:v.gName,guardianPhone:v.gPhone,bloodGroup:v.bg,food:v.food,medical:v.med}});
+    S.lock=false;await start();if(!S.lock)close(); // next: the password step (if needed), otherwise straight into the app
+   }catch(x){
+    const msg=x.message||'Could not save. Please try again.';
+    if(/^(Age|Gender)/i.test(msg))n=0;else if(/WhatsApp|Guardian/i.test(msg))n=1;else if(/^(Blood|Food|Medical)/i.test(msg))n=2;
+    err=msg;S.lock=true;draw()
+   }
+  };
+ };
+ draw();
+}
+function forcePw(){S.lock=true;$('#app').hidden=true;$('#login').hidden=false;
+ form('Set your own password',[{l:'Current password (the one you were given)',k:'old',t:'password',r:1},{l:'New password (min 6 characters)',k:'pw',t:'password',r:1}],{},async r=>{await api('changePassword',r);S.lock=false;await start()})}
 function updPay(){const e=$('#pa');if(!e)return;const c=S.d.config,x=S.d.me,a=Math.round((Number(e.value)||0)*100)/100;
  const q='pa='+encodeURIComponent(c.upiId)+'&pn='+encodeURIComponent(c.upiName||x.name)+'&tn='+encodeURIComponent((c.trip||'Trip')+' - '+x.name)+'&cu=INR'+(a>0?'&am='+a.toFixed(2):'');
  $('#gp').href='upi://pay?'+q;
@@ -629,7 +678,7 @@ set(){const c=cfg();return{title:'Settings',html:`<div class="acc"><div class="c
 
 /* ---------- actions ---------- */
 const accOpts=()=>S.d.accounts.map(a=>[a.id,a.name]);
-const personF=[{l:'Full name',k:'name',r:1},{l:'Type',k:'type',t:'select',o:[['Student','Student'],['Faculty','Faculty']]},{l:'Class / department',k:'class'},{l:'Phone',k:'phone',t:'tel'},{l:'Custom fee (leave empty for default)',k:'fee',t:'number'},{l:'Status',k:'status',t:'select',o:[['Active','Active'],['Cancelled','Cancelled (not going)']]},{l:'Gender',k:'gender',t:'select',o:[['','-'],['Boy','Boy'],['Girl','Girl']]}];
+const personF=[{l:'Full name',k:'name',r:1},{l:'Type',k:'type',t:'select',o:[['Student','Student'],['Faculty','Faculty']]},{l:'Class / department',k:'class'},{l:'Phone / WhatsApp',k:'phone',t:'tel'},{l:'Custom fee (leave empty for default)',k:'fee',t:'number'},{l:'Status',k:'status',t:'select',o:[['Active','Active'],['Cancelled','Cancelled (not going)']]},{l:'Gender',k:'gender',t:'select',o:[['','-'],['Boy','Boy'],['Girl','Girl']]},{l:'Age',k:'age',t:'number'},{l:'Parent / guardian name',k:'guardianName'},{l:'Guardian phone',k:'guardianPhone',t:'tel'},{l:'Blood group',k:'bloodGroup',t:'select',o:[['','-'],['A+','A+'],['A-','A-'],['B+','B+'],['B-','B-'],['O+','O+'],['O-','O-'],['AB+','AB+'],['AB-','AB-'],['Not sure','Not sure']]},{l:'Food',k:'food',t:'select',o:[['','-'],['Veg','Veg'],['Non-veg','Non-veg']]},{l:'Allergies / medical notes',k:'medical'}];
 function payForm(v){
  const o=[...S.d.participants].sort((a,b)=>a.name.localeCompare(b.name)).map(p=>[p.id,`${p.name}  (due ${inr(Math.max(feeOf(p)-paidBy(p.id),0))})`]);
  form(v.kind==='refund'?(v.id?'Edit refund':'Record refund'):v.id?'Edit payment':'Record payment',[{l:v.kind==='refund'?'Refund to':'Paid by',k:'participantId',t:'select',o},{l:'Amount (₹)',k:'amount',t:'number',r:1},{l:'Date',k:'date',t:'date',r:1},{l:'Paid into account',k:'account',t:'select',o:accOpts()},
@@ -641,7 +690,7 @@ function expForm(v){
 const ACT={
  'add-person':()=>form('Add person',personF,{type:'Student'},r=>saveRec('Participants',r)),
  'person':id=>{const p=S.d.participants.find(x=>x.id===id),s=status(p),pays=S.d.payments.filter(x=>x.participantId===id).sort((a,b)=>b.date.localeCompare(a.date));
-  sheet(`<h3>${esc(p.name)}</h3><p class="mut">${esc(p.type)}${p.class?' · '+esc(p.class):''}${p.phone?' · '+esc(p.phone):''}${p.gender?' · '+esc(p.gender):''}</p>${can(2)?loginBox(id):''}${can(1)&&splitSlots().length&&splitMap()[id]?`<p class="mut" style="margin-top:10px;font-size:13.5px">Pays to: <b>UPI ${splitMap()[id]}</b> · ${esc(cfg()['upi'+splitMap()[id]])}</p>`:''}
+  sheet(`<h3>${esc(p.name)}</h3><p class="mut">${esc(p.type)}${p.class?' · '+esc(p.class):''}${p.phone?' · '+esc(p.phone):''}${p.gender?' · '+esc(p.gender):''}</p>${(p.age||p.guardianName||p.bloodGroup||p.food||p.medical)?`<p class="mut" style="margin-top:6px;font-size:13.5px">${[p.age?'Age '+esc(p.age):'',p.guardianName?'Guardian: '+esc(p.guardianName)+(p.guardianPhone?' ('+esc(p.guardianPhone)+')':''):'',p.bloodGroup?'Blood '+esc(p.bloodGroup):'',p.food?esc(p.food):'',p.medical&&String(p.medical).toLowerCase()!=='none'?'⚠ '+esc(p.medical):''].filter(Boolean).join(' · ')}</p>`:''}${can(2)?loginBox(id):''}${can(1)&&splitSlots().length&&splitMap()[id]?`<p class="mut" style="margin-top:10px;font-size:13.5px">Pays to: <b>UPI ${splitMap()[id]}</b> · ${esc(cfg()['upi'+splitMap()[id]])}</p>`:''}
   <div style="display:flex;gap:18px;margin:14px 0"><div><small class="mut">Fee</small><br><b class="num">${inr(feeOf(p))}</b></div><div><small class="mut">Paid</small><br><b class="num">${inr(paidBy(id))}</b></div><div><small class="mut">Due</small><br><b class="num">${inr(Math.max(feeOf(p)-paidBy(id),0))}</b></div><span class="chip ${s[1]}" style="align-self:center">${s[0]}</span></div>
   ${pays.length?pays.map(x=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-top:1px solid #edf2f5;font-size:14px"><span>${x.date} · ${esc(x.mode)}<br><small class="mut">${esc(accName(x.account))}${x.ref?' · '+esc(x.ref):''}</small></span><b>${x.kind==='refund'?'Refund −':''}${inr(x.amount)}</b>${x.kind==='refund'||!p.phone?'':`<button class="ghost" style="padding:3px 10px;font-size:12px" data-act="wa-rcpt" data-id="${x.id}">Receipt</button>`}</div>`).join(''):'<p class="mut">No payments yet.</p>'}
   <div class="row" style="margin-top:14px">${can(2)?`<button class="danger" data-act="del-person" data-id="${id}" style="margin-right:auto">Delete</button>`:''}<button class="ghost" data-close>Close</button>${can(1)?`<button class="ghost" data-act="edit-person" data-id="${id}">Edit</button>${p.phone&&feeOf(p)>paidBy(id)?`<button class="ghost" data-act="wa-rem" data-id="${id}">Remind</button>`:''}<button class="ghost" data-act="add-ref" data-id="${id}">Refund</button><button class="pri" data-act="add-pay" data-id="${id}">Record payment</button>`:''}</div>`)},
@@ -753,7 +802,7 @@ const ACT={
   sheet(`<h3>Who pays where</h3>${sl.map(n=>{const l=live.filter(p=>m[p.id]===n);return`<h3 style="font-size:16px;margin:14px 0 4px">UPI ${n} · ${l.length} people</h3><p class="mut" style="font-size:13.5px">${l.map(p=>esc(p.name)).join(', ')||'-'}</p>`}).join('')}${un.length?`<h3 style="font-size:16px;margin:14px 0 4px">Not assigned yet · ${un.length}</h3><p class="mut" style="font-size:13.5px">${un.map(p=>esc(p.name)).join(', ')}</p>`:''}<div class="row" style="margin-top:14px"><button class="ghost" data-close>Close</button></div>`)},
  'split-redo':async()=>{if(!confirm('Divide everyone equally again from scratch? Some people may get a different UPI ID than before. Payments already recorded are not changed.'))return;try{await api('resplit');await load();toast('Divided equally')}catch(e){alert(e.message)}},
  'pw':()=>form('Change password',[{l:'Current password',k:'old',t:'password',r:1},{l:'New password (min 6 characters)',k:'pw',t:'password',r:1}],{},r=>api('changePassword',r)),
- 'csv-ppl':()=>csv('people',[['Name',p=>p.name],['Type',p=>p.type],['Class',p=>p.class],['Phone',p=>p.phone],['Fee',feeOf],['Paid',p=>paidBy(p.id)],['Due',p=>Math.max(feeOf(p)-paidBy(p.id),0)],['Status',p=>status(p)[0]]],S.d.participants),
+ 'csv-ppl':()=>csv('people',[['Name',p=>p.name],['Type',p=>p.type],['Class',p=>p.class],['Phone',p=>p.phone],['Fee',feeOf],['Paid',p=>paidBy(p.id)],['Due',p=>Math.max(feeOf(p)-paidBy(p.id),0)],['Status',p=>status(p)[0]],['Gender',p=>p.gender],['Age',p=>p.age],['Guardian',p=>p.guardianName],['Guardian phone',p=>p.guardianPhone],['Blood group',p=>p.bloodGroup],['Food',p=>p.food],['Medical',p=>p.medical]],S.d.participants),
  'csv-pay':()=>csv('payments',[['Date',x=>x.date],['Name',x=>pName(x.participantId)],['Amount',x=>x.amount],['Account',x=>accName(x.account)],['Type',x=>x.kind==='refund'?'Refund':'Payment'],['Mode',x=>x.mode],['Reference',x=>x.ref],['Note',x=>x.note],['Entered by',x=>x.by]],S.d.payments),
  'csv-exp':()=>csv('expenses',[['Date',x=>x.date],['Paid to',x=>x.payee],['Category',x=>x.category],['Amount',x=>x.amount],['Paid from',x=>accName(x.account)],['Note',x=>x.note],['Entered by',x=>x.by]],S.d.expenses)
 };
