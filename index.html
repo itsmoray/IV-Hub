@@ -315,6 +315,7 @@ html[data-theme=dark] .mbar{background:#0b1a24;color:var(--ink);border-bottom-co
 html[data-theme=dark] .mbar .av{background:#17435c}
 html[data-theme=dark] .kpi,html[data-theme=dark] .tw,html[data-theme=dark] .sheet,html[data-theme=dark] .lbox,html[data-theme=dark] #busy .bx,html[data-theme=dark] .tr-card,html[data-theme=dark] .mmenu,html[data-theme=dark] .ghost,html[data-theme=dark] .danger,html[data-theme=dark] .ob-opts button{background:var(--card);color:var(--ink);border-color:var(--line)}
 html[data-theme=dark] .danger{color:#ff8a70;border-color:#6b3326}
+html[data-theme=dark] .ob-opts button.on{background:rgba(63,181,194,.24);border-color:var(--sea);color:#8fe3ec}
 html[data-theme=dark] input,html[data-theme=dark] select,html[data-theme=dark] textarea{background:#0e2230;color:var(--ink);border-color:var(--line)}
 html[data-theme=dark] input:focus,html[data-theme=dark] select:focus,html[data-theme=dark] textarea:focus{background:#0e2230}
 html[data-theme=dark] th{background:#0f2433;color:var(--mut)}
@@ -401,7 +402,7 @@ const accName=id=>(S.d.accounts.find(a=>a.id===id)||{name:'(deleted)'}).name;
 const uname=id=>((S.d.users||[]).find(u=>u.participantId===id)||{}).username||'';
 const loginBox=id=>{const u=(S.d.users||[]).find(x=>x.participantId===id);return`<div style="margin:10px 0 0;padding:10px 12px;background:var(--foam);border-radius:10px;font-size:13.5px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">${u?`<span>Login: <b>${esc(u.username)}</b> <span class="chip ${u.active==='Yes'?'c-ok':'c-no'}">${u.active==='Yes'?'Active':'Disabled'}</span></span><button class="ghost" style="padding:5px 12px" data-act="set-pw" data-id="${u.id}">Set new password</button>`:`<span class="mut">No login yet</span><button class="ghost" style="padding:5px 12px" data-act="mk-one" data-id="${id}">Create login</button>`}</div>`};
 const tin=id=>sum((S.d.transfers||[]).filter(t=>t.to===id)),tout=id=>sum((S.d.transfers||[]).filter(t=>t.from===id));
-const wa=(p,msg)=>{let n=String(p.phone||'').replace(/\D/g,'');if(n.length===10)n='91'+n;window.open('https://wa.me/'+n+'?text='+encodeURIComponent(msg),'_blank')};
+const wa=(p,msg)=>{let n=String(p.phone||'').replace(/\D/g,'');if(n.length===10)n='91'+n;window.open('https://api.whatsapp.com/send?phone='+n+'&text='+encodeURIComponent(msg),'_blank')};
 const pName=id=>(S.d.participants.find(p=>p.id===id)||{name:'(deleted)'}).name;
 const status=p=>{if(p.status==='Cancelled')return['Cancelled','c-n'];const f=feeOf(p),x=paidBy(p.id);return f>0&&x>=f?['Paid','c-ok']:x>0?['Partial','c-part']:['Unpaid','c-no']};
 let TT=null,AC=null,LASTP=null;
