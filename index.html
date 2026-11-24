@@ -284,6 +284,18 @@ body{min-height:100vh;min-height:100dvh;overscroll-behavior-y:none}
 .ob-opts button{background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:9px 18px;font-weight:600}
 .ob-opts button.on{background:var(--foam);border-color:var(--sea);color:var(--sea)}
 .ob-sum{display:grid;grid-template-columns:auto 1fr;gap:7px 16px;font-size:14px;background:var(--foam);padding:14px 16px;border-radius:12px;margin-bottom:12px}.ob-sum span{color:var(--mut)}.ob-sum b{word-break:break-word}
+/* first-time tour */
+#tour{position:fixed;inset:0;z-index:80}
+#tour.nt{background:rgba(10,30,44,.62)}
+.tr-hole{position:fixed;box-shadow:0 0 0 9999px rgba(10,30,44,.62);outline:2.5px solid var(--sun);pointer-events:none;transition:top .28s var(--ease),left .28s var(--ease),width .28s var(--ease),height .28s var(--ease),opacity .2s}
+#tour.nt .tr-hole{opacity:0}
+.tr-card{position:fixed;background:#fff;border-radius:18px;padding:18px 20px;width:min(380px,calc(100vw - 24px));box-shadow:0 24px 60px rgba(7,24,36,.45);max-height:calc(100vh - 24px);overflow:auto}
+.tr-card h3{font-size:20px;margin-bottom:8px}
+.tr-card p{color:var(--mut);margin-bottom:14px;line-height:1.5}
+.tr-card p b{color:var(--ink)}
+.tr-card .row{margin-top:0;justify-content:flex-start;align-items:center;flex-wrap:nowrap}
+.tr-card .sp{flex:1}
+@media(max-width:700px){.tr-card{left:12px!important;right:12px;width:auto;border-radius:20px;padding:16px 16px 16px}}
 </style>
 </head>
 <body>
@@ -415,7 +427,7 @@ async function start(){
  try{await load()}catch(e){if(/profile first/i.test(e.message)){onboard();return}if(/new password/i.test(e.message)){forcePw();return}throw e}
  if(location.hash==='#verify'&&can(1)){S.page='claims';history.replaceState(null,'',location.pathname+location.search);draw()}
  if(S.u.role==='admin'&&!cfg().appUrl&&location.protocol==='https:')api('saveConfig',{cfg:{appUrl:location.origin+location.pathname}},true).then(()=>load(true)).catch(()=>{});
- $('#login').hidden=true;$('#app').hidden=false;
+ $('#login').hidden=true;$('#app').hidden=false;tourAuto();
 }
 // First-login questions for students (shown before the "set your own password" step).
 async function onboard(){
@@ -685,7 +697,7 @@ team(){
  <div class="tw"><table><thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Status</th><th></th></tr></thead><tbody id="tb">${rf()}</tbody></table></div>
  <p class="mut" style="margin-top:10px"><b>Admin</b>: everything, including deletes and team. <b>Editor</b>: add and edit people, payments, expenses. <b>Viewer</b>: read only. <b>Student</b>: sees only their own fee and pays by UPI.</p>`}},
 
-set(){const c=cfg();return{title:'Settings',html:`<div class="acc"><div class="card"><h3>Your account</h3><p class="mut" style="margin-bottom:12px">Signed in as ${esc(S.u.username)}</p><button class="ghost" data-act="pw">Change password</button></div><div class="card"><h3>Install the app</h3><p class="mut" style="margin-bottom:12px">Add it to your phone's home screen to open it like a normal app.</p><button class="ghost" data-act="install">Install on this phone</button></div><div class="card"><h3>Sound effects</h3><p class="mut" style="margin-bottom:12px">A chime on success and an alert for new payments.</p><button class="ghost" data-act="snd-toggle">Sound: ${SND()?'On':'Off'}</button></div>${can(2)?pushCard()+notifCard():''}
+set(){const c=cfg();return{title:'Settings',html:`<div class="acc"><div class="card"><h3>Your account</h3><p class="mut" style="margin-bottom:12px">Signed in as ${esc(S.u.username)}</p><button class="ghost" data-act="pw">Change password</button></div><div class="card"><h3>Install the app</h3><p class="mut" style="margin-bottom:12px">Add it to your phone's home screen to open it like a normal app.</p><button class="ghost" data-act="install">Install on this phone</button></div><div class="card"><h3>Sound effects</h3><p class="mut" style="margin-bottom:12px">A chime on success and an alert for new payments.</p><button class="ghost" data-act="snd-toggle">Sound: ${SND()?'On':'Off'}</button></div><div class="card"><h3>App tour</h3><p class="mut" style="margin-bottom:12px">A short walkthrough of how to use this app.</p><button class="ghost" data-act="tour">Start tour</button></div>${can(2)?pushCard()+notifCard():''}
  ${can(2)?`<div class="card"><h3>Trip details</h3><p class="mut">${esc(c.trip)} · ${esc(c.route)}<br>Default fee ${inr(c.fee)} per person<br>Dates: ${esc(c.start||'-')} to ${esc(c.end||'-')}<br>UPI: ${esc(c.upiId||'not set')}<br>Categories: ${esc(c.categories)}</p><div style="margin-top:12px"><button class="ghost" data-act="cfg">Edit trip details</button></div></div>`+splitCard():''}</div>`}}
 };
 
@@ -758,6 +770,7 @@ const ACT={
   }catch(e){alert(e.message)}},
  'p-test':async()=>{try{const r=await api('testPush');toast('Test sent. It should arrive in a moment.','info')}catch(e){alert(e.message)}},
  'p-off':async()=>{try{const sub=await(await swReady()).pushManager.getSubscription();if(sub){await api('pushUnsub',{endpoint:sub.endpoint});await sub.unsubscribe()}pushStatus();toast('Push notifications are off','info')}catch(e){alert(e.message)}},
+ 'tour':()=>tourStart(),
  'snd-toggle':()=>{localStorage.ivSound=SND()?'off':'on';draw();if(SND())chime()},
  'n-test':async()=>{try{await api('testNotify');toast('Test sent. Check your phone.','info')}catch(e){alert(e.message)}},
  'n-new':async()=>{if(!confirm('Create a new topic? You must subscribe to the new one in the ntfy app.'))return;try{await api('newTopic');await load();toast('New topic created')}catch(e){alert(e.message)}},
@@ -827,6 +840,139 @@ document.addEventListener('input',e=>{
  if(e.target.id==='pa')updPay();
  if(e.target.id==='q'||e.target.id==='f'){S[e.target.id]=e.target.value;if(S.rf){$('#tb').innerHTML=S.rf();lbl()}}
 });
+
+/* ---------- first-time tour (students + editors; replay from Settings) ---------- */
+let TOUR=null;
+const tourKey=()=>'ivTour1:'+((S.u&&S.u.username)||'');
+const tourSeen=()=>{try{return !!localStorage.getItem(tourKey())}catch(e){return false}};
+const tourMark=()=>{try{localStorage.setItem(tourKey(),'1')}catch(e){}};
+const tMob=()=>innerWidth<=860;
+const tVis=el=>!!el&&el.getClientRects().length>0;
+const tQ=(...sels)=>{for(const s of sels){const el=[...document.querySelectorAll(s)].find(tVis);if(el)return el}return null};
+const tUp=el=>el?el.parentElement:null;
+function tourSteps(){
+ const w=tMob();
+ if(S.u.role==='student')return[
+  {h:'Welcome to IV Hub',b:'This is where you see your trip fee and pay it. The tour takes about a minute. You can skip it any time and replay it later from the <b>Password</b> tab.'},
+  {page:'me',t:()=>tQ('.kpis'),h:'Your fee at a glance',b:'<b>Your fee</b> is the total for the trip, <b>Paid</b> is what the organiser has received from you, and <b>Balance</b> is what is still left. Balance turns green when you are fully paid.'},
+  {page:'me',opt:1,t:()=>tUp($('#pa')),h:'Choose how much to pay',b:'The box already shows your full balance. To pay in parts, change the amount first. <b>Pay full</b> puts your whole balance back.'},
+  {page:'me',opt:1,t:()=>w?tUp(tQ('[data-act="upi-manual"]')):tUp(tQ('.qrw')),h:'Pay with any UPI app',b:w?'Tap <b>Pay to UPI ID</b> to see the UPI ID and the amount with <b>Copy</b> buttons, then paste them into Google Pay, PhonePe or Paytm. You can also tap <b>Show QR code</b> to scan it from another phone.':'Scan this QR code with any UPI app on your phone (Google Pay, PhonePe, Paytm). The amount is already filled in. If your app shows a limit error, click <b>Pay to UPI ID</b> and type the UPI ID and amount yourself.'},
+  {page:'me',opt:1,t:()=>tUp($('#pr')),h:'Tell us once you have paid',b:'After the payment is done, copy the <b>UPI transaction ID</b> (also called UTR or reference number) from your UPI app, paste it here and tap <b>I have paid</b>. Do this only after the money has left your account.'},
+  {page:'me',t:()=>{const c=document.querySelectorAll('#view .card');return c[c.length-1]},h:'Check your history',b:'Your payment shows as <span class="chip c-part">Pending</span> until the organiser checks it, then <span class="chip c-ok">Received</span> and your balance updates. <span class="chip c-no">Rejected</span> means they could not find it, so contact them. Tap <b>Receipt</b> on a received payment to get a receipt.'},
+  {t:()=>tQ('#dock','#nav'),h:'Getting around',b:w?'The bar at the bottom has <b>My fees</b> and <b>Password</b>. Tap your initial at the top right to sign out.':'The menu on the left has <b>My payments</b> and <b>Password</b>. <b>Sign out</b> is at the bottom of the menu.'},
+  {page:'set',t:()=>tUp(tQ('#view [data-act="install"]')),h:'Keep it on your phone',b:'On your phone, open <b>Password</b> and tap <b>Install on this phone</b> to add IV Hub to your home screen. You can change your password here too, and replay this tour from the <b>App tour</b> card.'},
+  {h:'You are all set',b:'Pay on time, send your transaction ID, and watch your history for the green <b>Received</b>. If anything looks wrong, ask the organiser.'}
+ ];
+ const e=can(1),fabOrActions=()=>w&&e?tQ('#fab'):tQ('#actions');
+ return[
+  {h:'Welcome to IV Hub',b:(e?'You can add and edit people, payments and expenses, and check payments that students submit.':'You can view everything, but not change it.')+' This quick tour shows each section. Skip it any time and replay it from <b>Settings</b>.'},
+  {t:()=>tQ('#dock','#nav'),h:'Finding your way',b:w?'Use the bar at the bottom: <b>Home</b>, <b>People</b>, <b>Payments</b>'+(e?', <b>Verify</b>':'')+' and <b>Expenses</b>. Tap <b>More</b> for Accounts and Settings.'+(e?' The red number on Verify is how many student payments are waiting.':''):'Use the menu on the left to switch sections.'+(e?' The number next to <b>Verify</b> shows how many student payments are waiting.':'')},
+  {page:'dash',t:()=>tQ('.kpis'),h:'Overview',b:'Four numbers show where the trip stands: <b>Collected</b>, <b>Still to collect</b>, <b>Spent so far</b> and <b>Money in hand</b>. Scroll down for where the money went, balance per account and the latest entries.'},
+  {page:'ppl',t:()=>tQ('#view .tools'),h:'Find people fast',b:'Search by name, class or phone, or use the filter to show only <b>Unpaid</b>, <b>Partial</b> or <b>Paid</b> people.'},
+  {page:'ppl',opt:1,t:()=>tQ('#view tr.k'),h:'Open a person',b:'Tap a name to see their fee, what they paid and what is due.'+(e?' From there you can <b>Record payment</b>, send a <b>Remind</b> message on WhatsApp, give a <b>Refund</b> or <b>Edit</b> their details.':'')},
+  ...(e?[{page:'ppl',t:()=>tQ('#actions'),h:'Add people',b:'<b>Add person</b> adds one person. <b>Bulk add</b> lets you paste a list of names, even straight from Excel. <b>Remind unpaid</b> helps you message everyone who still owes money. <b>Export CSV</b> downloads the list.'}]:[]),
+  e?{page:'pay',t:fabOrActions,h:'Record a payment',b:w?'Tap the yellow <b>+</b> button, then <b>Record payment</b> for cash or any payment you received yourself. Pick the person, amount, date, the account the money went into and the mode, and add the reference if there is one. Tap a payment in the list to edit it.':'Click <b>Record payment</b> for cash or any payment you received yourself. Pick the person, amount, date, the account the money went into and the mode, and add the reference if there is one. Click a row in the table to edit it.'}
+   :{page:'pay',t:()=>tQ('#view .tw'),h:'Payments',b:'Every payment received is listed here with the account, mode and reference.'},
+  ...(e?[{page:'claims',t:()=>tQ('#view .tw','#view .kpis'),h:'Verify student payments',b:'When a student pays by UPI and taps <b>I have paid</b>, it appears here as Pending. <b>First check your UPI app or bank</b> for the same amount and reference. Then tap <b>Approve</b> to add it to Payments, or <b>Reject</b> if you cannot find it. Use <b>Approve all</b> only after checking every one.'}]:[]),
+  e?{page:'exp',t:fabOrActions,h:'Record an expense',b:w?'Tap the yellow <b>+</b> button, then <b>Add expense</b>. Enter who you paid, the category, the amount, the date, which account it came from, and the bill number in the note. The <b>Budget vs actual</b> box on this page shows if a category is going over.':'Click <b>Add expense</b> for every payment you make for the trip: who you paid, the category, the amount, the date, which account it came from, and the bill number in the note. The <b>Budget vs actual</b> box above the table shows if a category is going over.'}
+   :{page:'exp',t:()=>tQ('#view .tw'),h:'Expenses',b:'Every trip expense is listed here with its category and the account it was paid from.'},
+  {page:'acc',t:()=>tQ('#view .acc .card','#view .acc'),h:'Accounts',b:'Each account shows what came in, what was spent and the balance left. A red balance means more was spent than received.'+(e?' Use <b>Transfer money</b> when money moves from one account to another.':'')},
+  {page:'set',t:()=>tUp(tQ('#view [data-act="pw"]')),h:'Your account',b:'Change your password here, install IV Hub on your phone like an app, and turn sound on or off. You can replay this tour from the <b>App tour</b> card.'},
+  {h:'You are ready',b:'Everything you save goes straight into the shared sheet and shows your name under <b>Entered by</b>, so double-check amounts before saving.'+(can(2)?'':' Only admins can delete entries, so ask an admin if something has to be removed.')}
+ ];
+}
+function tourFocus(el){
+ if(!el)return;
+ for(let n=el;n&&n!==document.body;n=n.parentElement){if(getComputedStyle(n).position==='fixed')return}
+ const r=el.getBoundingClientRect();
+ if(innerWidth<=700)scrollBy(0,r.top-92);
+ else if(r.top<80||r.bottom>innerHeight-80)scrollBy(0,r.top-innerHeight*.25)
+}
+function tourPos(){
+ if(!TOUR)return;
+ const T=$('#tour');if(!T)return;
+ const s=TOUR.steps[TOUR.i],card=T.querySelector('.tr-card'),hole=T.querySelector('.tr-hole'),vw=innerWidth,vh=innerHeight,g=14;
+ let el=null;try{el=s.t?s.t():null}catch(x){}
+ card.style.top=card.style.bottom=card.style.left='';
+ const cw=card.offsetWidth,ch=card.offsetHeight;
+ const r=tVis(el)?el.getBoundingClientRect():null;
+ if(!r||r.bottom<=0||r.top>=vh){
+  T.classList.add('nt');
+  if(vw<=700)card.style.bottom='calc(12px + env(safe-area-inset-bottom))';
+  else{card.style.left=Math.round((vw-cw)/2)+'px';card.style.top=Math.max(12,Math.round((vh-ch)/2))+'px'}
+  return;
+ }
+ T.classList.remove('nt');
+ const pad=6,x=Math.max(r.left-pad,6),y=Math.max(r.top-pad,6),w=Math.min(r.right+pad,vw-6)-x,h=Math.min(Math.min(r.bottom+pad,vh-6)-y,Math.max(vh*.45,110));
+ const rad=(parseFloat(getComputedStyle(el).borderTopLeftRadius)||0)+pad;
+ hole.style.left=x+'px';hole.style.top=y+'px';hole.style.width=w+'px';hole.style.height=h+'px';hole.style.borderRadius=Math.max(10,rad)+'px';
+ if(vw<=700){
+  const below=vh-(y+h),above=y;
+  if(below>=ch+24||below>=above)card.style.bottom='calc(12px + env(safe-area-inset-bottom))';
+  else card.style.top='calc(12px + env(safe-area-inset-top))';
+ }else{
+  const cl=(v,a,b)=>Math.max(a,Math.min(v,b));let L,Tp;
+  if(y+h+g+ch<=vh-12){Tp=y+h+g;L=cl(x,12,vw-cw-12)}
+  else if(y-g-ch>=12){Tp=y-g-ch;L=cl(x,12,vw-cw-12)}
+  else if(x+w+g+cw<=vw-12){L=x+w+g;Tp=cl(y,12,vh-ch-12)}
+  else if(x-g-cw>=12){L=x-g-cw;Tp=cl(y,12,vh-ch-12)}
+  else{L=Math.round((vw-cw)/2);Tp=Math.max(12,vh-ch-24)}
+  card.style.left=L+'px';card.style.top=Tp+'px';
+ }
+}
+function tourShow(i,dir){
+ const steps=TOUR.steps;
+ while(i>=0&&i<steps.length){
+  const s=steps[i];
+  if(s.page&&S.page!==s.page){S.page=s.page;S.q='';S.f='';S.be=false;draw();scrollTo(0,0)}
+  let ok=true;if(s.opt){try{ok=tVis(s.t())}catch(x){ok=false}}
+  if(ok)break;
+  i+=dir;
+ }
+ if(i>=steps.length){tourEnd();return}
+ if(i<0)i=0;
+ TOUR.i=i;
+ const s=steps[i],N=steps.length,T=$('#tour'),card=T.querySelector('.tr-card');
+ card.innerHTML=`<div class="ob-bar"><i style="width:${(i+1)/N*100}%"></i></div><div class="ob-step">Step ${i+1} of ${N}</div><h3>${s.h}</h3><p>${s.b}</p><div class="row"><button type="button" class="ghost" id="tr-s">Skip tour</button><span class="sp"></span>${i?'<button type="button" class="ghost" id="tr-b">Back</button>':''}<button type="button" class="pri" id="tr-n">${i===N-1?'Done':i===0?'Start':'Next'}</button></div>`;
+ try{tourFocus(s.t&&s.t())}catch(x){}
+ tourPos();
+ const n=$('#tr-n');if(n)n.focus({preventScroll:true});
+}
+function tourKeys(e){
+ if(!TOUR)return;
+ if(e.key==='Escape'){e.preventDefault();tourEnd()}
+ else if(e.key==='ArrowRight'){e.preventDefault();tourShow(TOUR.i+1,1)}
+ else if(e.key==='ArrowLeft'&&TOUR.i>0){e.preventDefault();tourShow(TOUR.i-1,-1)}
+}
+function tourStart(){
+ if(TOUR||!S.u||!S.d||$('#app').hidden)return;
+ const T=document.createElement('div');T.id='tour';T.setAttribute('role','dialog');T.setAttribute('aria-modal','true');T.setAttribute('aria-label','App tour');
+ T.innerHTML='<div class="tr-hole"></div><div class="tr-card" aria-live="polite"></div>';
+ T.onclick=e=>{const b=e.target.closest('button');if(!b||!TOUR)return;
+  if(b.id==='tr-n')tourShow(TOUR.i+1,1);else if(b.id==='tr-b')tourShow(TOUR.i-1,-1);else if(b.id==='tr-s')tourEnd()};
+ document.body.appendChild(T);
+ TOUR={i:0,steps:tourSteps(),orig:S.page,tm:setInterval(tourPos,400)};
+ document.addEventListener('keydown',tourKeys);addEventListener('resize',tourPos);addEventListener('scroll',tourPos,{passive:true});
+ tourShow(0,1);
+}
+function tourEnd(){
+ if(!TOUR)return;
+ const o=TOUR.orig;clearInterval(TOUR.tm);TOUR=null;tourMark();
+ document.removeEventListener('keydown',tourKeys);removeEventListener('resize',tourPos);removeEventListener('scroll',tourPos);
+ const T=$('#tour');if(T)T.remove();
+ if(S.u&&S.d&&o&&S.page!==o){S.page=o;S.q='';S.f='';S.be=false;draw();scrollTo(0,0)}
+}
+function tourAuto(){
+ if(TOUR||!S.u||S.lock||!['student','editor'].includes(S.u.role)||tourSeen())return;
+ let n=0;
+ const w=()=>{
+  if(TOUR||!S.u||!S.d||S.lock||$('#app').hidden)return;
+  const busy=document.getElementById('splash')||$('#modal').classList.contains('on');
+  if(busy){if(n++<20)setTimeout(w,500);return}
+  tourStart();
+ };
+ setTimeout(w,700);
+}
 
 /* ---------- boot ---------- */
 if((window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone)$('#instl').hidden=true;
