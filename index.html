@@ -344,6 +344,21 @@ html[data-fs=xl] body{font-size:19px}html[data-fs=xl] table{font-size:17px}html[
 .lookrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}.lookrow button{flex:1 1 0;min-height:46px}.lookrow button.on{background:var(--sea);color:#fff;border-color:var(--sea)}
 @media(prefers-reduced-motion:reduce){#view.loading .card,#view.loading .kpi,#view.loading .tw{animation:none}}
 </style>
+<style id="trip-css">
+.pin{background:var(--foam);border:1px solid var(--line);border-left:4px solid var(--sun);border-radius:14px;padding:14px 16px;margin-bottom:16px;line-height:1.45}
+.pin b{display:block;margin-bottom:4px}.pin small{display:block;color:var(--mut);margin-top:8px}
+.tday{margin:18px 0 8px;font-weight:700;display:flex;align-items:center;gap:8px}
+.ttoday{background:var(--foam);color:var(--sea);border:1px solid var(--sea);border-radius:99px;padding:1px 9px;font-size:12px;font-weight:600}
+.tst{display:flex;gap:14px;padding:11px 0;border-top:1px solid var(--line)}.tst:first-child{border-top:0}.tst.k{cursor:pointer}
+.tst .tm{min-width:72px;font-weight:700;color:var(--sea)}.tst .tt{flex:1;min-width:0}.tst .tt b{display:block}.tst .tt span{display:block;color:var(--mut);margin-top:2px;line-height:1.4}
+#offtrip{position:fixed;inset:0;z-index:2147483000;background:var(--bg);color:var(--ink);overflow:auto;padding:max(18px,env(safe-area-inset-top)) 18px 40px}#offtrip .in{max-width:640px;margin:0 auto}
+.alr{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:9px 0;border-top:1px solid var(--line)}.alr:first-of-type{border-top:0}.alr b{text-align:right;font-weight:600}.alr a{color:var(--sea);font-weight:700}
+.alt input:not([type=checkbox]){width:100%;min-width:64px}.alt input[type=checkbox]{width:22px;height:22px;min-height:0;padding:0}
+.net{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:12.5px;line-height:1;padding:7px 11px;border-radius:99px;background:var(--foam);color:var(--ink);border:1px solid var(--line);white-space:nowrap}
+.net i{width:8px;height:8px;border-radius:50%;background:var(--ok)}.net.off{color:var(--bad)}.net.off i{background:var(--bad)}
+.rfb{width:40px;height:40px;min-height:0;padding:0;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);display:grid;place-items:center;flex:none}
+.tnet{display:flex;align-items:center;gap:8px}@media(max-width:860px){.tnet{display:none}.mbar .net{padding:6px 9px;font-size:11.5px}}
+</style>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="logo" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#0d2b3e"/><g><path d="M32 8c-8.6 0-15.5 6.6-15.5 14.8C16.5 32.8 32 46 32 46s15.5-13.2 15.5-23.2C47.5 14.6 40.6 8 32 8z" fill="#f2a33a"/><circle cx="32" cy="23" r="5.8" fill="#0d2b3e"/></g><g><path d="M10 53q5.5-4.5 11 0t11 0 11 0 11 0" stroke="#3fb5c2" stroke-width="3.5" fill="none" stroke-linecap="round"/></g><g><path d="M10 59q5.5-4.5 11 0t11 0 11 0 11 0" stroke="#0f7c8a" stroke-width="3.5" fill="none" stroke-linecap="round"/></g></symbol></svg>
@@ -369,10 +384,10 @@ html[data-fs=xl] body{font-size:19px}html[data-fs=xl] table{font-size:17px}html[
   <nav id="nav"></nav>
   <div class="me"><b id="meN"></b><span id="meR" class="route" style="padding:0"></span><br><button id="sLook" style="background:none;border:0;color:inherit;padding:4px 0;font-weight:600;opacity:.85">Appearance</button> · <button id="out">Sign out</button></div>
  </aside>
- <header class="mbar"><svg class="logo"><use href="#logo"/></svg><div class="mt"><b id="mbT"></b><span id="mbS"></span></div><button class="av" id="mAv" aria-label="Account menu" aria-haspopup="true"></button>
+ <header class="mbar"><svg class="logo"><use href="#logo"/></svg><div class="mt"><b id="mbT"></b><span id="mbS"></span></div><span class="net" role="status"><i></i><span>Online</span></span><button type="button" class="rfb" data-act="refresh" aria-label="Refresh"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.5-5.8"/><path d="M20 4v5h-5"/></svg></button><button class="av" id="mAv" aria-label="Account menu" aria-haspopup="true"></button>
   <div class="mmenu" id="mMenu" role="menu"><div class="who"><b id="mmN"></b><span id="mmR"></span></div><button id="mLook" role="menuitem" style="color:var(--ink)"><span style="width:18px;text-align:center">🌓</span>Appearance</button><button id="mOut" role="menuitem"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>Sign out</button></div></header>
  <nav id="dock" aria-label="Main"></nav>
- <main><div class="top"><h2 id="pt"></h2><div id="actions"></div></div><div id="view"></div></main>
+ <main><div class="top"><h2 id="pt"></h2><div id="actions"></div><div class="tnet"><span class="net" role="status"><i></i><span>Online</span></span><button type="button" class="rfb" data-act="refresh" aria-label="Refresh"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.5-5.8"/><path d="M20 4v5h-5"/></svg></button></div></div><div id="view"></div></main>
 </div>
 <div id="busy" role="status" aria-live="polite"><div class="bx"><div class="spin"></div><span id="bl">Loading…</span></div></div>
 <button class="fab" id="fab" aria-label="Quick add" hidden>+</button>
@@ -429,10 +444,10 @@ function api(action,p={},soft){
  const run=async()=>{
   if(!quiet)busy(true,lbl);
   try{
-   if(!navigator.onLine)throw new Error('No internet');const r=await fetch(API_URL,{method:'POST',body});const j=await r.json();
+   if(!navigator.onLine)throw new Error('No internet');const r=await fetch(API_URL,{method:'POST',body});const j=await r.json();setNet(true);
    if(!j.ok){if(/session expired/i.test(j.error))signOut(true);throw new Error(j.error)}
    return j.data;
-  }catch(e){throw new Error(/no internet|failed to fetch|load failed|networkerror/i.test(e.message)?'No internet connection, or the server cannot be reached. Check your network and try again.':e.message)}
+  }catch(e){if(/no internet|failed to fetch|load failed|networkerror/i.test(e.message))setNet(false);throw new Error(/no internet|failed to fetch|load failed|networkerror/i.test(e.message)?'No internet connection, or the server cannot be reached. Check your network and try again.':e.message)}
   finally{if(!quiet)busy(false)}
  };
  const pr=Q.then(run,run);Q=pr.catch(()=>{});return pr;
@@ -442,7 +457,7 @@ addEventListener('offline',netUI);
 addEventListener('online',()=>{const o=$('#offline');o.classList.add('ok','on');$('#ofl').textContent='Back online';setTimeout(()=>o.classList.remove('on','ok'),2200);if(S.u&&S.d)poll()});
 if(!navigator.onLine)netUI();
 const typing=()=>/^(INPUT|SELECT|TEXTAREA)$/.test((document.activeElement||{}).tagName||'');
-async function load(soft){const pre=S.pre;S.pre=null;S.d=pre||await api('load',{},soft);S.u=S.d.user;LASTP=(S.d.claims||[]).filter(c=>c.status==='Pending').length;if(soft&&(typing()||$('#modal').classList.contains('on')))drawNav();else draw()}
+async function load(soft){const pre=S.pre;S.pre=null;S.d=pre||await api('load',{},soft);S.u=S.d.user;cacheTrip();LASTP=(S.d.claims||[]).filter(c=>c.status==='Pending').length;if(soft&&(typing()||$('#modal').classList.contains('on')))drawNav();else draw()}
 // admins and helpers: quietly check for new student payments while the app is open
 async function poll(){
  if(!S.u||!S.d||document.visibilityState!=='visible'||NB)return;
@@ -528,11 +543,11 @@ function updPay(){const e=$('#pa');if(!e)return;const c=S.d.config,x=S.d.me,a=Ma
  const el=$('#qr');el.innerHTML='';if(a>0&&typeof QRCode!=='undefined')new QRCode(el,{text:'upi://pay?'+q,width:168,height:168})}
 
 /* ---------- shell ---------- */
-const PAGES=[['dash','Overview',0],['ppl','People',0],['pay','Payments',0],['claims','Verify',1],['exp','Expenses',0],['acc','Accounts',0],['log','Activity',2],['team','Team',2],['set','Settings',0]];
-const PRI=['dash','ppl','pay','claims','exp'],LAB={dash:'Home',ppl:'People',pay:'Payments',claims:'Verify',exp:'Expenses',me:'My fees',set:'Password'};
-const IC={me:'<path d="M7 5h10M7 9h10"/><path d="M7 5c5 0 7 1.5 7 4s-2 4-7 4l7 6"/>',dash:'<path d="M3 11l9-8 9 8"/><path d="M5 9.5V20h14V9.5"/>',ppl:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.3c2.2.7 3.5 2.6 3.5 5.7"/>',pay:'<rect x="2.5" y="5" width="19" height="14" rx="3"/><path d="M2.5 10h19M6.5 15h4"/>',claims:'<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>',exp:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',acc:'<path d="M3 10l9-6 9 6"/><path d="M5 10v8M10 10v8M14 10v8M19 10v8M3 20h18"/>',log:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',team:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',set:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',more:'<circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/>',out:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/>'};
+const PAGES=[['dash','Overview',0],['ppl','People',0],['pay','Payments',0],['claims','Verify',1],['exp','Expenses',0],['trip','Itinerary',0],['alloc','Allocation',1],['acc','Accounts',0],['log','Activity',2],['team','Team',2],['set','Settings',0]];
+const PRI=['dash','ppl','pay','claims','exp'],LAB={dash:'Home',ppl:'People',pay:'Payments',claims:'Verify',exp:'Expenses',me:'My fees',trip:'Itinerary',alloc:'Allocation',set:'Password'};
+const IC={alloc:'<rect x="3" y="6" width="18" height="11" rx="2.5"/><path d="M3 11h18M7 17v2M17 17v2"/><circle cx="7.5" cy="14" r=".6"/><circle cx="16.5" cy="14" r=".6"/>',trip:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',me:'<path d="M7 5h10M7 9h10"/><path d="M7 5c5 0 7 1.5 7 4s-2 4-7 4l7 6"/>',dash:'<path d="M3 11l9-8 9 8"/><path d="M5 9.5V20h14V9.5"/>',ppl:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.3c2.2.7 3.5 2.6 3.5 5.7"/>',pay:'<rect x="2.5" y="5" width="19" height="14" rx="3"/><path d="M2.5 10h19M6.5 15h4"/>',claims:'<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>',exp:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',acc:'<path d="M3 10l9-6 9 6"/><path d="M5 10v8M10 10v8M14 10v8M19 10v8M3 20h18"/>',log:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',team:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',set:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',more:'<circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/>',out:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/>'};
 const icon=k=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${IC[k]}</svg>`;
-const navList=()=>S.u.role==='student'?[['me','My payments'],['set','Password']]:PAGES.filter(p=>can(p[2]));
+const navList=()=>S.u.role==='student'?[['me','My payments'],['trip','Itinerary'],['set','Password']]:PAGES.filter(p=>can(p[2]));
 const moreList=()=>S.u.role==='student'?[]:navList().filter(p=>!PRI.includes(p[0]));
 function drawDock(){
  const pend=(S.d.claims||[]).filter(c=>c.status==='Pending').length,all=navList(),more=moreList(),pri=S.u.role==='student'?all:all.filter(p=>PRI.includes(p[0]));
@@ -547,10 +562,10 @@ $('#mLook').onclick=()=>{$('#mMenu').classList.remove('on');ACT.look()};$('#sLoo
 $('#dock').onclick=e=>{if(e.target.closest('#mre'))openMore()};
 function drawNav(){
  const pend=(S.d.claims||[]).filter(c=>c.status==='Pending').length;
- $('#nav').innerHTML=(S.u.role==='student'?[['me','My payments'],['set','Password']]:PAGES.filter(p=>can(p[2]))).map(p=>`<button data-go="${p[0]}" class="${S.page===p[0]?'on':''}">${p[1]}${p[0]==='claims'&&pend?` (${pend})`:''}</button>`).join('');
+ $('#nav').innerHTML=(S.u.role==='student'?[['me','My payments'],['trip','Itinerary'],['set','Password']]:PAGES.filter(p=>can(p[2]))).map(p=>`<button data-go="${p[0]}" class="${S.page===p[0]?'on':''}">${p[1]}${p[0]==='claims'&&pend?` (${pend})`:''}</button>`).join('');
 }
 function draw(){
- if(S.u.role==='student'&&!['me','set'].includes(S.page))S.page='me';
+ if(S.u.role==='student'&&!['me','trip','set'].includes(S.page))S.page='me';
  else if(S.u.role!=='student'&&S.page==='me')S.page='dash'; // page left over from a student session has no data for staff
  const c=cfg();$('#brand').textContent=c.trip||'Industrial Visit';$('#route').textContent=c.route||'';
  $('#meN').textContent=S.u.name;$('#meR').textContent=S.u.role;
@@ -755,7 +770,47 @@ function pendCard(){
  const i=Math.min(S.qi||0,l.length-1),c=l[i],sa=slotAcc(c.participantId)||cfg().upiAccount||'',acc=S.d.accounts.some(a=>a.id===sa)?sa:'';
  return`<div class="card" style="margin-bottom:16px;border-left:4px solid #f2a33a"><div style="display:flex;justify-content:space-between;gap:10px"><b>Payment to verify</b><span class="mut">${i+1} of ${l.length}</span></div><div style="font-size:17px;font-weight:700;margin-top:6px">${esc(pName(c.participantId))} · ${inr(c.amount)}</div><small class="mut">Ref ${esc(c.ref)} · ${esc(c.date)}${acc?' · into '+esc(accName(acc)):''}</small><div class="row" style="margin-top:12px"><button class="danger" data-act="q-no" data-id="${c.id}">Reject</button>${l.length>1?'<button class="ghost" data-act="q-next">Next</button>':''}<button class="pri" data-act="q-ok" data-id="${c.id}">Approve</button></div></div>`;
 }
+function setNet(on){on=!!on;document.querySelectorAll('.net').forEach(e=>{e.classList.toggle('off',!on);e.lastElementChild.textContent=on?'Online':'Offline'})}
+addEventListener('online',()=>setNet(true));addEventListener('offline',()=>setNet(false));setNet(navigator.onLine);
+/* ---------- itinerary + pinned update ---------- */
+const fmtT=t=>{const m=/^(\d{1,2}):(\d{2})$/.exec(t||'');if(!m)return'•';let h=+m[1];const ap=h>=12?'PM':'AM';h=h%12||12;return h+':'+m[2]+' '+ap};
+const fmtDay=d=>{try{const t=new Date(d+'T00:00:00');return isNaN(t)?d:t.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})}catch(e){return d}};
+const stopsOf=()=>[...((S.d&&S.d.stops)||[])].sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||'')));
+function pinCard(c){c=c||(S.d&&S.d.config)||{};if(!c.pinText&&!c.pinTitle)return'';const a=c.pinAt?' · updated '+esc(rcptNice(String(c.pinAt).slice(0,10)))+', '+esc(String(c.pinAt).slice(11,16)):'';return`<div class="pin"><b>📌 ${esc(c.pinTitle||'Latest update')}</b>${c.pinText?`<div>${esc(c.pinText).replace(/\n/g,'<br>')}</div>`:''}<small>Latest update${a}</small></div>`}
+function tripHTML(st,adm){
+ if(!st.length)return`<div class="card"><div class="empty">No itinerary yet.<br>${adm?'Tap “Add stop” to build the day-wise schedule.':'The organisers will add it soon.'}</div></div>`;
+ const by={};st.forEach(x=>(by[x.date]=by[x.date]||[]).push(x));const t=today();
+ return Object.keys(by).sort().map(d=>`<div class="tday">${esc(fmtDay(d))}${d===t?' <span class="ttoday">Today</span>':''}</div><div class="card">${by[d].map(x=>`<div class="tst${adm?' k':''}"${adm?` data-act="edit-stop" data-id="${esc(x.id)}"`:''}><div class="tm">${esc(fmtT(x.time))}</div><div class="tt"><b>${esc(x.title)}</b>${x.note?`<span>${esc(x.note).replace(/\n/g,'<br>')}</span>`:''}</div></div>`).join('')}</div>`).join('');
+}
+function cacheTrip(){try{const d=S.d||{};if(!Array.isArray(d.stops))return;const c=d.config||{};localStorage.ivTrip=JSON.stringify({at:Date.now(),trip:c.trip||'',stops:d.stops.map(x=>({date:x.date,time:x.time,title:x.title,note:x.note})),pin:{t:c.pinTitle||'',x:c.pinText||'',a:c.pinAt||''}})}catch(e){}}
+function showOfflineTrip(){ // read-only saved copy, used only when the app cannot reach the server on opening
+ let c=null;try{c=JSON.parse(localStorage.ivTrip||'null')}catch(e){}
+ if(!c||!Array.isArray(c.stops))return false;
+ const st=[...c.stops].sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||''))),el=document.createElement('div');el.id='offtrip';
+ el.innerHTML=`<div class="in"><h2 style="margin:6px 0 4px">${esc(c.trip||'Itinerary')}</h2><p class="mut" style="margin-bottom:14px">You are offline. Showing the itinerary saved on ${esc(new Date(c.at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}))}.</p>${pinCard({pinTitle:c.pin&&c.pin.t,pinText:c.pin&&c.pin.x,pinAt:c.pin&&c.pin.a})}${tripHTML(st,false)}<div class="row" style="justify-content:flex-start;margin-top:16px"><button class="pri" id="otry">Try again</button></div></div>`;
+ document.body.appendChild(el);$('#otry').onclick=()=>location.reload();return true;
+}
+/* ---------- bus / room / group allocation + parent consent ---------- */
+function allocCard(){const a=S.d&&S.d.alloc;if(!a)return'';const r=[];
+ if(a.bus||a.seat)r.push(['🚌 Bus',[a.bus?esc(a.bus):'',a.seat?'Seat '+esc(a.seat):''].filter(Boolean).join(' · ')]);
+ if(a.room)r.push(['🛏️ Room',esc(a.room)+(a.mates&&a.mates.length?'<br><small class="mut">With '+a.mates.map(esc).join(', ')+'</small>':'')]);
+ if(a.group||a.leader){const l=a.leader,ph=l&&String(l.phone||'').replace(/\D/g,'');r.push(['👥 Group'+(a.group?' '+esc(a.group):''),l?(l.me?'You are the group leader':'Leader: '+esc(l.name)+(ph?' · <a href="tel:'+ph+'">Call</a>':'')):'']);}
+ r.push(['📝 Parent consent',a.consent?'<span style="color:var(--ok)">Received ✓</span>':'<span style="color:var(--bad)">Pending: please submit the form</span>']);
+ return`<div class="card" style="margin-bottom:16px"><h3>Your trip details</h3>${r.length>1?'':'<p class="mut" style="margin-bottom:6px">Bus and room details will appear here once they are allotted.</p>'}${r.map(x=>`<div class="alr"><span>${x[0]}</span><b>${x[1]}</b></div>`).join('')}</div>`}
+const alVal=(p,k)=>{const e=S.al&&S.al[p.id];return e&&k in e?e[k]:(p[k]==null?'':String(p[k]))};
+function alDirty(){const out=[];Object.keys(S.al||{}).forEach(id=>{const p=S.d.participants.find(x=>x.id===id);if(!p)return;const r={id};let d=false;['bus','seat','room','group','leader','consent'].forEach(k=>{r[k]=alVal(p,k);if(String(r[k])!==String(p[k]==null?'':p[k]))d=true});if(d)out.push(r)});return out}
+function alTouch(e){const t=e.target;if(!t||!t.dataset||!t.dataset.al)return;const i=t.dataset.al.split('|'),id=i[0],k=i[1];S.al=S.al||{};(S.al[id]=S.al[id]||{})[k]=t.type==='checkbox'?(t.checked?'Yes':''):t.value;const b=$('#alsave');if(b){const n=alDirty().length;b.disabled=!n;b.textContent=n?'Save changes ('+n+')':'Save changes'}}
+document.addEventListener('input',alTouch);document.addEventListener('change',alTouch);
 const VIEWS={
+alloc(){
+ const P=S.d.participants.filter(p=>p.status!=='Cancelled'),n=alDirty().length;S.al=S.al||{};
+ const rf=()=>{const q=S.q.toLowerCase();const l=P.filter(p=>(!q||String(p.name||'').toLowerCase().includes(q))&&(!S.f||(S.f==='nocons'&&alVal(p,'consent')!=='Yes')||(S.f==='nobus'&&!alVal(p,'bus'))||(S.f==='noroom'&&!alVal(p,'room'))));
+  return l.map(p=>`<tr><td><b>${esc(p.name)}</b><br><small class="mut">${esc(p.type||'')}${p.class?' · '+esc(p.class):''}</small></td>${['bus','seat','room','group'].map(k=>`<td><input data-al="${esc(p.id)}|${k}" value="${esc(alVal(p,k))}" maxlength="${k==='bus'?20:k==='seat'?10:30}" autocomplete="off" aria-label="${k}"></td>`).join('')}<td><input type="checkbox" data-al="${esc(p.id)}|leader" ${alVal(p,'leader')==='Yes'?'checked':''} aria-label="Group leader"></td><td><input type="checkbox" data-al="${esc(p.id)}|consent" ${alVal(p,'consent')==='Yes'?'checked':''} aria-label="Parent consent received"></td></tr>`).join('')||'<tr><td colspan="7" class="empty">Nobody matches.</td></tr>'};
+ return{title:'Allocation',rf,actions:`<button class="pri" id="alsave" data-act="save-alloc" ${n?'':'disabled'}>Save changes${n?' ('+n+')':''}</button>`,
+ html:`<p class="mut" style="margin-bottom:12px">Parent consent received <b>${P.filter(p=>p.consent==='Yes').length}</b> of ${P.length} · Bus given to <b>${P.filter(p=>p.bus).length}</b> · Room given to <b>${P.filter(p=>p.room).length}</b>. Fill the boxes, then tap Save changes. Students see their own details on their home screen.</p>
+ <div class="tools"><input id="q" placeholder="Search name" value="${esc(S.q)}"><select id="f"><option value="">Everyone</option><option value="nocons" ${S.f==='nocons'?'selected':''}>Consent pending</option><option value="nobus" ${S.f==='nobus'?'selected':''}>No bus yet</option><option value="noroom" ${S.f==='noroom'?'selected':''}>No room yet</option></select></div>
+ <div class="tw"><table class="alt"><thead><tr><th>Name</th><th>Bus</th><th>Seat</th><th>Room</th><th>Group</th><th>Leader</th><th>Consent</th></tr></thead><tbody id="tb">${rf()}</tbody></table></div>`}},
+trip(){const adm=can(2),c=cfg();return{title:'Itinerary',actions:adm?`<button class="ghost" data-act="edit-pin">${c.pinText||c.pinTitle?'Edit pinned update':'Pin an update'}</button><button class="pri" data-act="add-stop">Add stop</button>`:'',html:pinCard()+tripHTML(stopsOf(),adm)}},
 dash(){
  const d=S.d,P=d.participants,col=psum(d.payments),spent=sum(d.expenses),exp=P.reduce((a,p)=>a+feeOf(p),0);
  const total=Math.max(col,spent)||1,by=cats().map((c,i)=>({c,a:sum(d.expenses.filter(x=>x.category===c)),col:COL[i%COL.length]}));
@@ -823,7 +878,7 @@ claims(){const c=[...(S.d.claims||[])].sort((a,b)=>(a.status==='Pending'?0:1)-(b
 me(){const d=S.d,p=d.me,c=d.config,f=feeOf(p),x=paidBy(p.id),due=Math.max(f-x,0),pend=d.claims.filter(k=>k.status==='Pending').reduce((a,k)=>a+Number(k.amount),0);
  const pay=!c.upiId?'<p class="mut">Online payment is not set up yet. Please ask the organiser.</p>':due<=0?'<p style="color:var(--ok);font-weight:700">Fully paid. Thank you!</p>':`<div class="tools" style="margin-bottom:6px"><input id="pa" type="number" min="1" max="${due}" step="any" inputmode="decimal" value="${due}" style="max-width:170px"><button class="ghost" data-act="pay-full">Pay full ${inr(due)}</button></div><p class="mut" style="margin-bottom:12px">Change the amount to pay only a part now.</p><div class="payw" style="display:flex;gap:18px;flex-wrap:wrap;align-items:center"><div class="qrw"><div id="qr" style="background:#fff;padding:8px;border:1px solid var(--line);border-radius:10px;min-width:60px;min-height:60px"></div></div><div class="payc" style="display:flex;flex-direction:column;gap:10px"><button class="ghost" data-act="upi-manual">Pay to UPI ID</button><button class="ghost mob" data-act="qr-toggle">Hide QR code</button><small class="mut">Or scan the QR with any UPI app.<br>Paying to ${esc(c.upiName||c.upiId)}<br>App shows a limit error? Use “Pay to UPI ID”.</small></div></div><h3 style="margin:22px 0 8px">After paying</h3><div class="tools"><input id="pr" placeholder="UPI transaction ID" style="max-width:260px"><button class="pri" data-act="claim-send">I have paid</button></div><small class="mut">The organiser verifies it, then it appears in your history as received.</small>`;
  const hist=[...d.payments.map(y=>({d:y.date,a:(y.kind==='refund'?'Refund −':'')+inr(y.amount),s:'Received',k:'c-ok',id:y.kind==='refund'?'':y.id})),...d.claims.filter(k=>k.status!=='Approved').map(k=>({d:k.date,a:inr(k.amount),s:k.status,k:k.status==='Rejected'?'c-no':'c-part'}))].sort((a,b)=>String(b.d).localeCompare(String(a.d)));
- return{title:'My payments',actions:'<button class="ghost" data-act="refresh">Refresh</button>',html:`${(()=>{const pct=f>0?Math.max(0,Math.min(100,Math.round(x/f*100))):0,dd=c.dueDate,late=dd&&dd<today();return`<div class="card" style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><b>${pct}% paid</b><span class="mut">${inr(x)} of ${inr(f)}</span></div><div style="height:12px;border-radius:99px;background:#e5edf0;margin:10px 0;overflow:hidden"><i style="display:block;height:100%;width:${pct}%;background:${due>0?'#f2a33a':'#1b9a62'}"></i></div>${due>0?`<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span>Balance <b>${inr(due)}</b>${dd?` · due by <b style="color:${late?'var(--bad)':'inherit'}">${esc(rcptNice(dd))}${late?' (overdue)':''}</b>`:''}</span>${c.upiId?'<button class="pri" data-act="pay-scroll">Pay now</button>':''}</div>`:'<b style="color:var(--ok)">Fully paid ✓</b>'}</div>`})()}<div class="kpis k3"><div class="kpi"><small>Your fee</small><div class="num">${inr(f)}</div></div><div class="kpi"><small>Paid</small><div class="num">${inr(x)}</div>${pend?`<em>${inr(pend)} awaiting verification</em>`:''}</div><div class="kpi"><small>Balance</small><div class="num" style="color:${due>0?'var(--bad)':'var(--ok)'}">${inr(due)}</div></div></div>
+ return{title:'My payments',actions:'<button class="ghost" data-act="refresh">Refresh</button>',html:`${pinCard()}${allocCard()}${(()=>{const pct=f>0?Math.max(0,Math.min(100,Math.round(x/f*100))):0,dd=c.dueDate,late=dd&&dd<today();return`<div class="card" style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><b>${pct}% paid</b><span class="mut">${inr(x)} of ${inr(f)}</span></div><div style="height:12px;border-radius:99px;background:#e5edf0;margin:10px 0;overflow:hidden"><i style="display:block;height:100%;width:${pct}%;background:${due>0?'#f2a33a':'#1b9a62'}"></i></div>${due>0?`<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span>Balance <b>${inr(due)}</b>${dd?` · due by <b style="color:${late?'var(--bad)':'inherit'}">${esc(rcptNice(dd))}${late?' (overdue)':''}</b>`:''}</span>${c.upiId?'<button class="pri" data-act="pay-scroll">Pay now</button>':''}</div>`:'<b style="color:var(--ok)">Fully paid ✓</b>'}</div>`})()}<div class="kpis k3"><div class="kpi"><small>Your fee</small><div class="num">${inr(f)}</div></div><div class="kpi"><small>Paid</small><div class="num">${inr(x)}</div>${pend?`<em>${inr(pend)} awaiting verification</em>`:''}</div><div class="kpi"><small>Balance</small><div class="num" style="color:${due>0?'var(--bad)':'var(--ok)'}">${inr(due)}</div></div></div>
  ${d.breakup.length?`<div class="card" style="margin-bottom:16px"><h3>Where your ${inr(f)} goes</h3>${d.breakup.map(b=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #edf2f5"><span>${esc(b.c)}</span><b>${inr(b.a)}</b></div>`).join('')}<small class="mut" style="display:block;margin-top:8px">Approximate split of your fee across trip costs.</small></div>`:''}
  <div class="card" id="paycard" style="margin-bottom:16px"><h3>Pay now</h3>${pay}</div>
  <div class="card"><h3>History</h3>${hist.map(r=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-top:1px solid #edf2f5"><span>${r.d}</span><span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end"><b>${r.a}</b> <span class="chip ${r.k}">${r.s}</span>${r.id?`<button class="ghost" style="padding:3px 12px;font-size:12.5px;min-height:34px" data-act="rcpt" data-id="${r.id}">Receipt</button>`:''}</span></div>`).join('')||'<p class="mut">No payments yet.</p>'}</div>`}},
@@ -857,6 +912,10 @@ function expForm(v){
  form(v.id?'Edit expense':'Add expense',[{l:'Paid to (agency / vendor)',k:'payee',r:1},{l:'Category',k:'category',t:'select',o:cats().map(c=>[c,c])},{l:'Amount (₹)',k:'amount',t:'number',r:1},{l:'Date',k:'date',t:'date',r:1},{l:'Paid from account',k:'account',t:'select',o:accOpts()},{l:'Note / bill number',k:'note',t:'textarea'}],v,r=>saveRec('Expenses',{...v,...r}),{del:v.id&&can(2)?delRec('Expenses',v.id):null});
 }
 const ACT={
+ 'save-alloc':async()=>{const ch=alDirty();if(!ch.length){toast('No changes to save','info');return}try{await api('saveAlloc',{rows:ch});S.al={};await load();toast('Saved')}catch(e){alert(e.message)}},
+ 'add-stop':()=>{const st=stopsOf(),last=st.length?st[st.length-1].date:(cfg().start||today());form('Add stop',[{l:'Date',k:'date',t:'date',r:1},{l:'Time',k:'time',t:'time'},{l:'What / where',k:'title',r:1,p:'e.g. Reach hotel, Dudhsagar Falls'},{l:'Details (optional)',k:'note',t:'textarea'}],{date:last},r=>saveRec('Stops',r))},
+ 'edit-stop':id=>{const v=stopsOf().find(x=>x.id===id);if(!v||!can(2))return;form('Edit stop',[{l:'Date',k:'date',t:'date',r:1},{l:'Time',k:'time',t:'time'},{l:'What / where',k:'title',r:1},{l:'Details (optional)',k:'note',t:'textarea'}],v,r=>saveRec('Stops',{...v,...r}),{del:delRec('Stops',id),confirm:'Delete this stop? This is recorded in the activity log.'})},
+ 'edit-pin':()=>{if(!can(2))return;const c=cfg();form('Pinned update',[{l:'Title',k:'pinTitle',p:'e.g. Tomorrow’s reporting time'},{l:'Message (reporting time, dress code, what to bring)',k:'pinText',t:'textarea'}],{pinTitle:c.pinTitle||'',pinText:c.pinText||''},async r=>{await api('saveConfig',{cfg:r});await load();if((cfg().pinText||'')!==String(r.pinText||'').trim())throw new Error('The server has not been updated yet. Update the backend (Code.js) first.')},{msg:'Pinned',del:c.pinText||c.pinTitle?async()=>{await api('saveConfig',{cfg:{pinTitle:'',pinText:''}});await load()}:null,delLabel:'Remove pin',confirm:'Remove the pinned update from every home screen?',delMsg:'Pin removed'})},
  'add-person':()=>form('Add person',personF,{type:'Student'},r=>saveRec('Participants',r)),
  'person':id=>{const p=S.d.participants.find(x=>x.id===id),s=status(p),pays=S.d.payments.filter(x=>x.participantId===id).sort((a,b)=>b.date.localeCompare(a.date));
   sheet(`<h3>${esc(p.name)}</h3><p class="mut">${esc(p.type)}${p.class?' · '+esc(p.class):''}${p.phone?' · '+esc(p.phone):''}${p.gender?' · '+esc(p.gender):''}</p>${(p.age||p.guardianName||p.bloodGroup||p.food||p.medical)?`<p class="mut" style="margin-top:6px;font-size:13.5px">${[p.age?'Age '+esc(p.age):'',p.guardianName?'Guardian: '+esc(p.guardianName)+(p.guardianPhone?' ('+esc(p.guardianPhone)+')':''):'',p.bloodGroup?'Blood '+esc(p.bloodGroup):'',p.food?esc(p.food):'',p.medical&&String(p.medical).toLowerCase()!=='none'?'⚠ '+esc(p.medical):''].filter(Boolean).join(' · ')}</p>`:''}${can(2)?loginBox(id):''}${can(1)&&splitSlots().length&&splitMap()[id]?`<p class="mut" style="margin-top:10px;font-size:13.5px">Pays to: <b>UPI ${splitMap()[id]}</b> · ${esc(cfg()['upi'+splitMap()[id]])}</p>`:''}
@@ -1154,7 +1213,8 @@ if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWor
   if(!S.t){$('#login').hidden=false;return done()}
   try{await start();done()}
   catch(e){
-   if(/Cannot reach/.test(e.message)){
+   if(/no internet|cannot be reached/i.test(e.message)&&showOfflineTrip()){clearTimeout(slow);done();return}
+   if(/Cannot reach|no internet|cannot be reached/i.test(e.message)){
     clearTimeout(slow);sp.textContent='Could not connect. Check your internet and try again.';$('#splash .ld').hidden=true;
     const b=document.createElement('button');b.className='pri';b.textContent='Try again';
     b.onclick=()=>{b.remove();$('#splash .ld').hidden=false;sp.textContent='Connecting…';go()};spl.appendChild(b);
