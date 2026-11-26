@@ -358,6 +358,16 @@ html[data-fs=xl] body{font-size:19px}html[data-fs=xl] table{font-size:17px}html[
 .net i{width:8px;height:8px;border-radius:50%;background:var(--ok)}.net.off{color:var(--bad)}.net.off i{background:var(--bad)}
 .rfb{width:40px;height:40px;min-height:0;padding:0;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);display:grid;place-items:center;flex:none}
 .tnet{display:flex;align-items:center;gap:8px}@media(max-width:860px){.tnet{display:none}.mbar .net{padding:6px 9px;font-size:11.5px}}
+.rcard{display:flex;justify-content:space-between;align-items:center;gap:12px;cursor:pointer;margin-bottom:10px}.rcard small{display:block;margin-top:2px}.rcn{text-align:right}.rcn b{font-size:24px}
+.rs{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}.rs-n b{font-size:32px}.rs-l{color:var(--mut)}
+.rbar{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin:10px 0}.rbar i{display:block;height:100%;background:var(--ok);border-radius:99px;transition:width .25s}
+.rs-w{color:var(--bad);font-weight:600;margin-top:4px}.rs-u{color:var(--mut);font-size:13px;margin-top:2px}
+.rl-r{display:flex;align-items:stretch;gap:8px;margin-bottom:8px}
+.rl-t{flex:1;min-width:0;display:flex;align-items:center;gap:14px;text-align:left;min-height:58px;padding:8px 14px;border-radius:14px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.rl-k{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-weight:800;flex:none}
+.rl-r.on .rl-t{border-color:var(--ok);background:var(--foam)}.rl-r.on .rl-k{background:var(--ok);border-color:var(--ok);color:#fff}.rl-r.pend .rl-t{border-style:dashed}
+.rl-n{min-width:0}.rl-n b{display:block}.rl-n small{color:var(--mut)}
+.rl-c{width:52px;display:grid;place-items:center;border-radius:14px;border:1.5px solid var(--line);background:var(--card);text-decoration:none;font-size:20px;flex:none}
 </style>
 </head>
 <body>
@@ -444,7 +454,7 @@ function api(action,p={},soft){
  const run=async()=>{
   if(!quiet)busy(true,lbl);
   try{
-   if(!navigator.onLine)throw new Error('No internet');const r=await fetch(API_URL,{method:'POST',body});const j=await r.json();setNet(true);
+   if(!navigator.onLine)throw new Error('No internet');const r=await fetch(API_URL,{method:'POST',body,signal:(action==='markRoll'||action==='rollGet')&&window.AbortSignal&&AbortSignal.timeout?AbortSignal.timeout(20000):undefined});const j=await r.json();setNet(true);
    if(!j.ok){if(/session expired/i.test(j.error))signOut(true);throw new Error(j.error)}
    return j.data;
   }catch(e){if(/no internet|failed to fetch|load failed|networkerror/i.test(e.message))setNet(false);throw new Error(/no internet|failed to fetch|load failed|networkerror/i.test(e.message)?'No internet connection, or the server cannot be reached. Check your network and try again.':e.message)}
@@ -543,9 +553,9 @@ function updPay(){const e=$('#pa');if(!e)return;const c=S.d.config,x=S.d.me,a=Ma
  const el=$('#qr');el.innerHTML='';if(a>0&&typeof QRCode!=='undefined')new QRCode(el,{text:'upi://pay?'+q,width:168,height:168})}
 
 /* ---------- shell ---------- */
-const PAGES=[['dash','Overview',0],['ppl','People',0],['pay','Payments',0],['claims','Verify',1],['exp','Expenses',0],['trip','Itinerary',0],['alloc','Allocation',1],['acc','Accounts',0],['log','Activity',2],['team','Team',2],['set','Settings',0]];
-const PRI=['dash','ppl','pay','claims','exp'],LAB={dash:'Home',ppl:'People',pay:'Payments',claims:'Verify',exp:'Expenses',me:'My fees',trip:'Itinerary',alloc:'Allocation',set:'Password'};
-const IC={alloc:'<rect x="3" y="6" width="18" height="11" rx="2.5"/><path d="M3 11h18M7 17v2M17 17v2"/><circle cx="7.5" cy="14" r=".6"/><circle cx="16.5" cy="14" r=".6"/>',trip:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',me:'<path d="M7 5h10M7 9h10"/><path d="M7 5c5 0 7 1.5 7 4s-2 4-7 4l7 6"/>',dash:'<path d="M3 11l9-8 9 8"/><path d="M5 9.5V20h14V9.5"/>',ppl:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.3c2.2.7 3.5 2.6 3.5 5.7"/>',pay:'<rect x="2.5" y="5" width="19" height="14" rx="3"/><path d="M2.5 10h19M6.5 15h4"/>',claims:'<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>',exp:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',acc:'<path d="M3 10l9-6 9 6"/><path d="M5 10v8M10 10v8M14 10v8M19 10v8M3 20h18"/>',log:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',team:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',set:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',more:'<circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/>',out:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/>'};
+const PAGES=[['dash','Overview',0],['ppl','People',0],['pay','Payments',0],['claims','Verify',1],['exp','Expenses',0],['trip','Itinerary',0],['alloc','Allocation',1],['attend','Attendance',0],['acc','Accounts',0],['log','Activity',2],['team','Team',2],['set','Settings',0]];
+const PRI=['dash','ppl','pay','claims','exp'],LAB={dash:'Home',ppl:'People',pay:'Payments',claims:'Verify',exp:'Expenses',me:'My fees',trip:'Itinerary',alloc:'Allocation',attend:'Attendance',set:'Password'};
+const IC={attend:'<path d="M9 6h11M9 12h11M9 18h11"/><path d="M3.5 6l1.2 1.2L7 5M3.5 12l1.2 1.2L7 11M3.5 18l1.2 1.2L7 17"/>',alloc:'<rect x="3" y="6" width="18" height="11" rx="2.5"/><path d="M3 11h18M7 17v2M17 17v2"/><circle cx="7.5" cy="14" r=".6"/><circle cx="16.5" cy="14" r=".6"/>',trip:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',me:'<path d="M7 5h10M7 9h10"/><path d="M7 5c5 0 7 1.5 7 4s-2 4-7 4l7 6"/>',dash:'<path d="M3 11l9-8 9 8"/><path d="M5 9.5V20h14V9.5"/>',ppl:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.3c2.2.7 3.5 2.6 3.5 5.7"/>',pay:'<rect x="2.5" y="5" width="19" height="14" rx="3"/><path d="M2.5 10h19M6.5 15h4"/>',claims:'<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>',exp:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',acc:'<path d="M3 10l9-6 9 6"/><path d="M5 10v8M10 10v8M14 10v8M19 10v8M3 20h18"/>',log:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',team:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',set:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',more:'<circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/>',out:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/>'};
 const icon=k=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${IC[k]}</svg>`;
 const navList=()=>S.u.role==='student'?[['me','My payments'],['trip','Itinerary'],['set','Password']]:PAGES.filter(p=>can(p[2]));
 const moreList=()=>S.u.role==='student'?[]:navList().filter(p=>!PRI.includes(p[0]));
@@ -801,7 +811,52 @@ const alVal=(p,k)=>{const e=S.al&&S.al[p.id];return e&&k in e?e[k]:(p[k]==null?'
 function alDirty(){const out=[];Object.keys(S.al||{}).forEach(id=>{const p=S.d.participants.find(x=>x.id===id);if(!p)return;const r={id};let d=false;['bus','seat','room','group','leader','consent'].forEach(k=>{r[k]=alVal(p,k);if(String(r[k])!==String(p[k]==null?'':p[k]))d=true});if(d)out.push(r)});return out}
 function alTouch(e){const t=e.target;if(!t||!t.dataset||!t.dataset.al)return;const i=t.dataset.al.split('|'),id=i[0],k=i[1];S.al=S.al||{};(S.al[id]=S.al[id]||{})[k]=t.type==='checkbox'?(t.checked?'Yes':''):t.value;const b=$('#alsave');if(b){const n=alDirty().length;b.disabled=!n;b.textContent=n?'Save changes ('+n+')':'Save changes'}}
 document.addEventListener('input',alTouch);document.addEventListener('change',alTouch);
+/* ---------- attendance roll calls ---------- */
+const RC={pend:{},busy:false};let RQ=[];
+try{RQ=(JSON.parse(localStorage.ivRQ||'[]')||[]).filter(x=>x&&x.rid&&x.pid).map(x=>({rid:x.rid,pid:x.pid,on:!!x.on}))}catch(e){RQ=[]}
+RQ.forEach(x=>RC.pend[x.rid+'|'+x.pid]=x.on);
+const rqSave=()=>{try{localStorage.ivRQ=JSON.stringify(RQ.map(x=>({rid:x.rid,pid:x.pid,on:x.on})))}catch(e){}};
+const rollOf=id=>((S.d&&S.d.rolls)||[]).find(r=>r.id===id);
+const isHere=(r,pid)=>{const k=r.id+'|'+pid;return k in RC.pend?RC.pend[k]:r.present.indexOf(pid)>=0};
+function rosterOf(r){const b=String(r.scope||'').startsWith('bus:')?r.scope.slice(4).trim().toLowerCase():'';return S.d.participants.filter(p=>p.status!=='Cancelled'&&(!b||String(p.bus||'').trim().toLowerCase()===b)).sort((a,c)=>String(a.name).localeCompare(String(c.name)))}
+function rollSum(r){const R=rosterOf(r),n=R.length,h=R.filter(p=>isHere(r,p.id)).length,w=RQ.length;
+ return`<div class="rs"><div class="rs-n"><b>${h}</b> / ${n} present</div><div class="rs-l">${n-h} still to come</div></div><div class="rbar"><i style="width:${n?Math.round(h/n*100):0}%"></i></div>${w?`<div class="rs-w">⏳ ${w} tap${w>1?'s':''} waiting to sync${navigator.onLine?'':' (no internet)'}</div>`:''}${r.upd?`<div class="rs-u">Last update: ${esc(r.upd)}</div>`:''}`}
+function rollPaint(){if(S.page!=='attend'||!S.roll)return;const r=rollOf(S.roll);if(!r)return;const a=$('#rsum'),t=$('#tb');if(a)a.innerHTML=rollSum(r);if(t&&S.rf)t.innerHTML=S.rf()}
+const RQ_NET=/no internet|timed out|timeout|abort|failed to fetch|load failed|network/i;
+async function rqFlush(){ // sends the waiting taps one by one; anything that fails for lack of signal stays in the queue and is retried
+ if(RC.busy||!RQ.length||!S.u||!S.d||!can(1))return;
+ RC.busy=true;
+ try{while(RQ.length){
+  const it=RQ.find(x=>!x.fl)||null;if(!it)break;it.fl=true;
+  try{
+   const res=await api('markRoll',{id:it.rid,pids:[it.pid],on:it.on},true),r=rollOf(it.rid);
+   if(r){r.present=res.present;if(res.upd)r.upd=res.upd}
+   RQ=RQ.filter(x=>x!==it);rqSave();
+   if(!RQ.some(x=>x.rid===it.rid&&x.pid===it.pid))delete RC.pend[it.rid+'|'+it.pid];
+   rollPaint();
+  }catch(e){
+   it.fl=false;
+   if(RQ_NET.test(e.message))break; // no signal: keep it and try again later
+   RQ=RQ.filter(x=>x!==it);rqSave();delete RC.pend[it.rid+'|'+it.pid]; // the server refused (closed, deleted, no permission)
+   toast(e.message,'err');rollPaint();
+  }
+ }}finally{RC.busy=false;rollPaint()}
+}
+setInterval(rqFlush,12000);addEventListener('online',()=>rqFlush());
+setInterval(async()=>{ // picks up taps made by other organisers while this roll call is open
+ if(S.page!=='attend'||!S.roll||!S.u||RC.busy||RQ.length||NB||document.visibilityState!=='visible')return;
+ const id=S.roll;try{const g=await api('rollGet',{id},true),r=rollOf(id);if(!r||S.roll!==id||RQ.length)return;r.present=g.present;r.upd=g.upd;if(g.closed!==r.closed){r.closed=g.closed;draw()}else rollPaint()}catch(e){}
+},8000);
+function rollView(r){const adm=can(1)&&!r.closed;
+ const rf=()=>{const q=S.q.toLowerCase();return rosterOf(r).filter(p=>(!q||String(p.name||'').toLowerCase().includes(q))&&(!S.f||(S.f==='left'&&!isHere(r,p.id))||(S.f==='here'&&isHere(r,p.id)))).map(p=>{const on=isHere(r,p.id),pend=(r.id+'|'+p.id) in RC.pend,ph=String(p.phone||'').replace(/\D/g,'');
+  return`<div class="rl-r${on?' on':''}${pend?' pend':''}"><button type="button" class="rl-t" data-act="roll-tap" data-id="${esc(p.id)}" ${adm?'':'disabled'} aria-pressed="${on}"><span class="rl-k">${on?'✓':''}</span><span class="rl-n"><b>${esc(p.name)}</b><small>${esc([p.type==='Faculty'?'Faculty':'',p.class,!r.scope&&p.bus?p.bus:''].filter(Boolean).join(' · '))}</small></span></button>${ph?`<a class="rl-c" href="tel:${ph}" aria-label="Call ${esc(p.name)}">📞</a>`:''}</div>`}).join('')||'<div class="empty">Nobody matches.</div>'};
+ return{title:r.title,rf,actions:'<button class="ghost" data-act="roll-back">← All roll calls</button>'+(can(1)?`<button class="ghost" data-act="roll-close">${r.closed?'Reopen':'Close'}</button>`:'')+(can(2)?'<button class="ghost danger" data-act="roll-del">Delete</button>':''),
+ html:`<div class="card" id="rsum">${rollSum(r)}</div><div class="tools"><input id="q" placeholder="Search name" value="${esc(S.q)}"><select id="f"><option value="">Everyone</option><option value="left" ${S.f==='left'?'selected':''}>Not here yet</option><option value="here" ${S.f==='here'?'selected':''}>Present</option></select></div>${r.closed?'<p class="mut" style="margin-bottom:10px">This roll call is closed. Tap Reopen to change it.</p>':''}<div class="rl" id="tb">${rf()}</div>`}}
 const VIEWS={
+attend(){
+ if(S.roll){const r=rollOf(S.roll);if(r)return rollView(r);S.roll=''}
+ const L=S.d.rolls||[],adm=can(1);
+ return{title:'Attendance',actions:adm?'<button class="pri" data-act="add-roll">New roll call</button>':'',html:L.length?L.map(r=>{const R=rosterOf(r),h=R.filter(p=>isHere(r,p.id)).length;return`<div class="card rcard" data-act="roll-open" data-id="${esc(r.id)}"><div><b>${esc(r.title)}</b><small class="mut">${r.scope?esc(r.scope.slice(4))+' · ':''}${esc(r.created)}${r.closed?' · Closed':''}</small></div><div class="rcn"><b>${h}</b><small class="mut">of ${R.length}</small></div></div>`}).join(''):`<div class="card"><div class="empty">No roll calls yet.<br>${adm?'Tap “New roll call” before boarding the bus, at the hotel, or at each stop.':'The organisers will start them on the trip.'}</div></div>`}},
 alloc(){
  const P=S.d.participants.filter(p=>p.status!=='Cancelled'),n=alDirty().length;S.al=S.al||{};
  const rf=()=>{const q=S.q.toLowerCase();const l=P.filter(p=>(!q||String(p.name||'').toLowerCase().includes(q))&&(!S.f||(S.f==='nocons'&&alVal(p,'consent')!=='Yes')||(S.f==='nobus'&&!alVal(p,'bus'))||(S.f==='noroom'&&!alVal(p,'room'))));
@@ -912,6 +967,12 @@ function expForm(v){
  form(v.id?'Edit expense':'Add expense',[{l:'Paid to (agency / vendor)',k:'payee',r:1},{l:'Category',k:'category',t:'select',o:cats().map(c=>[c,c])},{l:'Amount (₹)',k:'amount',t:'number',r:1},{l:'Date',k:'date',t:'date',r:1},{l:'Paid from account',k:'account',t:'select',o:accOpts()},{l:'Note / bill number',k:'note',t:'textarea'}],v,r=>saveRec('Expenses',{...v,...r}),{del:v.id&&can(2)?delRec('Expenses',v.id):null});
 }
 const ACT={
+ 'add-roll':()=>{if(!can(1))return;const bs=[...new Set(S.d.participants.filter(p=>p.status!=='Cancelled').map(p=>String(p.bus||'').trim()).filter(Boolean))].sort();form('New roll call',[{l:'Title',k:'title',r:1,p:'e.g. Bus 1: leaving Ernakulam'},{l:'Who',k:'scope',t:'select',o:[['','Everyone'],...bs.map(b=>['bus:'+b,b+' only'])]}],{scope:''},r=>saveRec('Rolls',r))},
+ 'roll-open':id=>{S.roll=id;S.q='';S.f='';draw();scrollTo(0,0)},
+ 'roll-back':()=>{S.roll='';S.q='';S.f='';draw();scrollTo(0,0)},
+ 'roll-tap':pid=>{const r=rollOf(S.roll);if(!r||r.closed||!can(1))return;const on=!isHere(r,pid);RC.pend[r.id+'|'+pid]=on;RQ=RQ.filter(x=>x.fl||!(x.rid===r.id&&x.pid===pid));RQ.push({rid:r.id,pid,on});rqSave();rollPaint();rqFlush()},
+ 'roll-close':async()=>{const r=rollOf(S.roll);if(!r||!can(1))return;if(RQ.some(x=>x.rid===r.id)){alert('Some taps are still waiting to sync. Wait until the “waiting” message disappears, then try again.');return}try{await saveRec('Rolls',{id:r.id,closed:r.closed?'':'Yes'})}catch(e){alert(e.message)}},
+ 'roll-del':async()=>{const r=rollOf(S.roll);if(!r||!can(2)||!confirm('Delete the roll call “'+r.title+'”? This cannot be undone.'))return;try{RQ=RQ.filter(x=>x.rid!==r.id);rqSave();S.roll='';await delRec('Rolls',r.id)();toast('Deleted')}catch(e){alert(e.message)}},
  'save-alloc':async()=>{const ch=alDirty();if(!ch.length){toast('No changes to save','info');return}try{await api('saveAlloc',{rows:ch});S.al={};await load();toast('Saved')}catch(e){alert(e.message)}},
  'add-stop':()=>{const st=stopsOf(),last=st.length?st[st.length-1].date:(cfg().start||today());form('Add stop',[{l:'Date',k:'date',t:'date',r:1},{l:'Time',k:'time',t:'time'},{l:'What / where',k:'title',r:1,p:'e.g. Reach hotel, Dudhsagar Falls'},{l:'Details (optional)',k:'note',t:'textarea'}],{date:last},r=>saveRec('Stops',r))},
  'edit-stop':id=>{const v=stopsOf().find(x=>x.id===id);if(!v||!can(2))return;form('Edit stop',[{l:'Date',k:'date',t:'date',r:1},{l:'Time',k:'time',t:'time'},{l:'What / where',k:'title',r:1},{l:'Details (optional)',k:'note',t:'textarea'}],v,r=>saveRec('Stops',{...v,...r}),{del:delRec('Stops',id),confirm:'Delete this stop? This is recorded in the activity log.'})},
@@ -1020,8 +1081,8 @@ const ACT={
  'wa-rem':id=>{const p=S.d.participants.find(x=>x.id===id);wa(p,`Hi ${p.name}, a reminder for ${cfg().trip}: fee ${inr(feeOf(p))}, paid ${inr(paidBy(id))}, pending ${inr(feeOf(p)-paidBy(id))}. ${cfg().dueDate?'Please pay by '+rcptNice(cfg().dueDate)+'.':'Please pay at the earliest.'} Thank you!`)},
  'wa-rcpt':id=>{const x=S.d.payments.find(y=>y.id===id),p=S.d.participants.find(q=>q.id===x.participantId);wa(p,rcptMsg(x,p))},
  'emerg':()=>{const tel=v=>String(v||'').replace(/[^\d+]/g,''),ln=(l,n,v)=>tel(v)?`<a href="tel:${tel(v)}" style="display:inline-block;margin:4px 8px 0 0;padding:7px 14px;border-radius:99px;background:var(--foam);color:var(--sea);font-weight:700;text-decoration:none">${l} ${esc(n?n+' · ':'')}${esc(v)}</a>`:'';
-  const draw=q=>{q=String(q||'').toLowerCase().trim();const l=S.d.participants.filter(p=>p.status!=='Cancelled'&&(!q||((p.name||'')+' '+(p.class||'')).toLowerCase().includes(q))).sort((a,b)=>String(a.name).localeCompare(b.name)).slice(0,40);
-   $('#em').innerHTML=l.map(p=>`<div style="background:#f4f8f9;border-radius:14px;padding:12px 14px;margin-bottom:8px"><b>${esc(p.name)}</b> <small class="mut">${esc(p.class||p.type||'')}</small><div style="margin-top:4px;font-size:13.5px">🩸 <b>${esc(p.bloodGroup||'?')}</b> · 🍽 ${esc(p.food||'?')}${p.medical?`<br>⚠️ ${esc(p.medical)}`:''}</div>${ln('📞','',p.phone)}${ln('👪',p.guardianName,p.guardianPhone)}</div>`).join('')||'<p class="mut">No match.</p>'};
+  const draw=q=>{q=String(q||'').toLowerCase().trim();const l=S.d.participants.filter(p=>p.status!=='Cancelled'&&(!q||((p.name||'')+' '+(p.class||'')+' '+(p.phone||'')+' '+(p.guardianPhone||'')).toLowerCase().includes(q))).sort((a,b)=>String(a.name).localeCompare(b.name));const L0=l,N0=L0.length;
+   $('#em').innerHTML=L0.slice(0,40).map(p=>`<div style="background:#f4f8f9;border-radius:14px;padding:12px 14px;margin-bottom:8px"><b>${esc(p.name)}</b> <small class="mut">${esc(p.class||p.type||'')}</small><div style="margin-top:4px;font-size:13.5px">🩸 <b>${esc(p.bloodGroup||'?')}</b> · 🍽 ${esc(p.food||'?')}${(p.bus||p.seat||p.room)?`<br>🚌 ${esc([p.bus,p.seat?'seat '+p.seat:'',p.room?'room '+p.room:''].filter(Boolean).join(' · '))}`:''}<br>${!String(p.medical||'').trim()?'<span class="mut">Allergies / medical: not filled in</span>':/^\s*(none|nil|no|na|n\/a|-+)\s*\.?\s*$/i.test(p.medical)?'Allergies / medical: None':`⚠️ <b>${esc(p.medical)}</b>`}</div>${ln('📞','',p.phone)}${ln('👪',p.guardianName,p.guardianPhone)}</div>`).join('')+(N0>40?`<p class="mut">Showing 40 of ${N0}. Type a name, class or phone number to narrow it down.</p>`:'')||'<p class="mut">No match.</p>'};
   sheet('<h3>Emergency info</h3><input id="eq" placeholder="Search name or class" style="margin-bottom:10px"><div id="em" class="mlist" style="max-height:60vh;overflow:auto;display:block"></div><div class="row"><button class="ghost" data-close>Close</button></div>');$('#eq').oninput=e=>draw(e.target.value);draw('')},
  'wa-pdf':id=>{const x=S.d.payments.find(y=>y.id===id),p=S.d.participants.find(q=>q.id===x.participantId);if(x&&p)rcptShare(x,p,true)},
  'add-tr':()=>ACT.trForm({date:today(),from:S.d.accounts[0]?.id,to:S.d.accounts[1]?.id||S.d.accounts[0]?.id}),
