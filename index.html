@@ -368,6 +368,25 @@ html[data-fs=xl] body{font-size:19px}html[data-fs=xl] table{font-size:17px}html[
 .rl-r.on .rl-t{border-color:var(--ok);background:var(--foam)}.rl-r.on .rl-k{background:var(--ok);border-color:var(--ok);color:#fff}.rl-r.pend .rl-t{border-style:dashed}
 .rl-n{min-width:0}.rl-n b{display:block}.rl-n small{color:var(--mut)}
 .rl-c{width:52px;display:grid;place-items:center;border-radius:14px;border:1.5px solid var(--line);background:var(--card);text-decoration:none;font-size:20px;flex:none}
+/* phone fixes: header no longer stretches on short pages, dark mode for table cards, compact People cards */
+@media(max-width:860px){#app{align-content:start;grid-template-columns:minmax(0,1fr)}}
+html[data-theme=dark] tr{background:var(--card);border-color:var(--line)}
+html[data-theme=dark] .mmenu button:active{background:#173040}
+.pt-c{display:none}
+@media(max-width:700px){
+ .pt tr{display:grid;grid-template-columns:1fr auto;grid-template-areas:"nm st" "ty du" "fe pa" "lg lg";gap:3px 12px;padding:12px 16px}
+ .pt td{padding:2px 0!important;text-align:left;justify-content:flex-start;gap:6px;font-size:14px}
+ .pt td:not([colspan]):nth-child(1),.pt td:not([colspan]):nth-child(4){display:none}
+ .pt td:nth-child(2){grid-area:nm;font-size:16px;display:block}.pt td:nth-child(2)::before,.pt td:nth-child(3)::before,.pt td:nth-child(8)::before{content:none}
+ .pt .pt-c{display:block;color:var(--mut);font-size:12.5px;font-weight:500}
+ .pt td:nth-child(3){grid-area:ty}.pt td:nth-child(8){grid-area:st;justify-self:end}
+ .pt td:nth-child(7){grid-area:du;justify-self:end;font-weight:700}
+ .pt td:nth-child(5){grid-area:fe}.pt td:nth-child(6){grid-area:pa;justify-self:end}
+ .pt td:nth-child(9){grid-area:lg;color:var(--mut);font-size:12.5px}
+ .pt td[colspan]{grid-column:1/-1;grid-area:auto}
+ .pt td:nth-child(9):empty{display:none}
+}
+html[data-theme=dark] .c-n{background:#173b4a;color:#8fd3dc}
 </style>
 </head>
 <body>
@@ -900,10 +919,10 @@ dash(){
 
 ppl(){
  const rf=()=>{const q=S.q.toLowerCase();const l=S.d.participants.filter(p=>(!q||(p.name+p.class+p.phone).toLowerCase().includes(q))&&(!S.f||(S.f==='Student'||S.f==='Faculty'?p.type===S.f:status(p)[0]===S.f)));
-  return l.map((p,n)=>{const s=status(p),f=feeOf(p),x=paidBy(p.id);return`<tr class="k" data-act="person" data-id="${p.id}"><td data-l="" style="color:var(--mut);width:44px">${n+1}</td><td><b>${esc(p.name)}</b></td><td><span class="chip c-n">${esc(p.type)}</span></td><td>${esc(p.class)}</td><td class="r">${inr(f)}</td><td class="r">${inr(x)}</td><td class="r">${inr(Math.max(f-x,0))}</td><td><span class="chip ${s[1]}">${s[0]}</span></td>${can(2)?`<td>${esc(uname(p.id))}</td>`:''}</tr>`}).join('')||'<tr><td colspan="9" class="empty">No people found. Add people or use Bulk add.</td></tr>'};
+  return l.map((p,n)=>{const s=status(p),f=feeOf(p),x=paidBy(p.id);return`<tr class="k" data-act="person" data-id="${p.id}"><td data-l="" style="color:var(--mut);width:44px">${n+1}</td><td><b>${esc(p.name)}</b><small class="pt-c">${esc(p.class)}</small></td><td><span class="chip c-n">${esc(p.type)}</span></td><td>${esc(p.class)}</td><td class="r">${inr(f)}</td><td class="r">${inr(x)}</td><td class="r">${inr(Math.max(f-x,0))}</td><td><span class="chip ${s[1]}">${s[0]}</span></td>${can(2)?`<td>${esc(uname(p.id))}</td>`:''}</tr>`}).join('')||'<tr><td colspan="9" class="empty">No people found. Add people or use Bulk add.</td></tr>'};
  return{title:'People',rf,actions:(can(1)?'<button class="ghost" data-act="remind-list">Remind unpaid</button>':'')+exBtn('csv-ppl')+(can(2)?'<button class="ghost" data-act="replace-list">Replace student list</button><button class="ghost" data-act="import-list">Import class list</button>':'')+(can(1)?'<button class="ghost" data-act="bulk">Bulk add</button>':'')+addBtn('add-person','Add person'),
  html:`<div class="tools"><input id="q" placeholder="Search name, class, phone" value="${esc(S.q)}"><select id="f">${['','Student','Faculty','Paid','Partial','Unpaid','Cancelled'].map(o=>`<option value="${o}" ${S.f===o?'selected':''}>${o||'Everyone'}</option>`).join('')}</select></div>
- <div class="tw"><table><thead><tr><th>#</th><th>Name</th><th>Type</th><th>Class</th><th class="r">Fee</th><th class="r">Paid</th><th class="r">Due</th><th>Status</th>${can(2)?'<th>Login</th>':''}</tr></thead><tbody id="tb">${rf()}</tbody></table></div>`}},
+ <div class="tw"><table class="pt"><thead><tr><th>#</th><th>Name</th><th>Type</th><th>Class</th><th class="r">Fee</th><th class="r">Paid</th><th class="r">Due</th><th>Status</th>${can(2)?'<th>Login</th>':''}</tr></thead><tbody id="tb">${rf()}</tbody></table></div>`}},
 
 pay(){
  const rf=()=>{const q=S.q.toLowerCase();return S.d.payments.filter(x=>(!S.f||x.account===S.f)&&(!q||(pName(x.participantId)+x.ref+x.note).toLowerCase().includes(q))).sort((a,b)=>b.date.localeCompare(a.date)).map(x=>
