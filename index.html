@@ -387,6 +387,10 @@ html[data-theme=dark] .mmenu button:active{background:#173040}
  .pt td:nth-child(9):empty{display:none}
 }
 html[data-theme=dark] .c-n{background:#173b4a;color:#8fd3dc}
+/* notification pop-ups (toast): readable in dark mode */
+html[data-theme=dark] #toast{background:#1f4258;color:var(--ink);border:1px solid var(--line);box-shadow:0 12px 34px rgba(0,0,0,.55)}
+html[data-theme=dark] #toast:not(.info) .ti{color:#fff}
+html[data-theme=dark] #toast.err{border-color:var(--bad)}html[data-theme=dark] #toast.info{border-color:var(--sun)}
 </style>
 </head>
 <body>
