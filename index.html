@@ -15,7 +15,7 @@
 /* appearance: theme + text size, saved on this device only */
 (function(){var P={t:'auto',f:'n'};try{P=Object.assign(P,JSON.parse(localStorage.getItem('iv-look')||'{}'))}catch(e){}
 window.IVLOOK=P;window.ivApply=function(){var d=P.t==='dark'||(P.t==='auto'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);
-var h=document.documentElement;h.setAttribute('data-theme',d?'dark':'light');h.setAttribute('data-fs',P.f||'n');h.classList.toggle('v2',P.v!=='1');h.classList.toggle('nomo',P.m==='off'||!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches));
+var h=document.documentElement;h.setAttribute('data-theme',d?'dark':'light');h.setAttribute('data-fs',P.f||'n');h.classList.toggle('v2',P.v!=='1');h.classList.toggle('v3',P.v==='3');h.classList.toggle('nomo',P.m==='off'||!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches));
 var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',d?'#0b1a24':'#f0f4f6')};
 window.ivSet=function(k,v){P[k]=v;try{localStorage.setItem('iv-look',JSON.stringify(P))}catch(e){}window.ivApply()};
 window.ivApply();try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){if(P.t==='auto')window.ivApply()})}catch(e){}})();
@@ -469,6 +469,53 @@ html.v2 #actions button[data-act=refresh]{display:none}
 html.nomo #view.enter>*,html.nomo .sheet,html.nomo #splash svg,html.nomo #splash .sun,html.nomo #splash h1,html.nomo #splash p,html.nomo #splash .ld,html.nomo .lbox,html.nomo .lbox .logo,html.nomo .ring .rf,html.nomo #dock button.on .ic{animation:none!important}
 html.nomo #splash,html.nomo #toast,html.nomo #dock button{transition-duration:.01s!important}
 </style>
+<style id="v3">
+/* ===== VOYAGE (html.v3, preview). Sits on top of the New look; choose New look or Classic in Appearance to go back. ===== */
+@keyframes v3pulse{0%{box-shadow:0 0 0 0 rgba(61,220,151,.6)}100%{box-shadow:0 0 0 14px rgba(61,220,151,0)}}
+html.v3 body{background:radial-gradient(120% 36% at 50% 0%,rgba(63,181,194,.22),transparent 70%) no-repeat,var(--bg)}
+html.v3[data-theme=dark] body{background:radial-gradient(120% 32% at 50% 0%,rgba(63,181,194,.16),transparent 70%) no-repeat,var(--bg)}
+html.v3 .top h2{font-size:34px;letter-spacing:-.04em}
+html.v3 .card,html.v3 .kpi{border:0;border-radius:28px;box-shadow:0 2px 4px rgba(13,43,62,.04),0 26px 50px -30px rgba(13,43,62,.4)}
+html.v3[data-theme=dark] .card,html.v3[data-theme=dark] .kpi{background:linear-gradient(180deg,#17344c,#12293a);box-shadow:inset 0 1px 0 rgba(255,255,255,.07)}
+html.v3 .kpi::before{display:none}html.v3 .kpi small{text-transform:uppercase;letter-spacing:.08em;font-size:11px}
+html.v3 .pri,html.v3 .hero-pay,html.v3 .ghost,html.v3 .danger,html.v3 .chip{border-radius:999px}
+html.v3 .ghost,html.v3 .danger{border-color:transparent;background:var(--foam)}
+html.v3 input,html.v3 select,html.v3 textarea{background:var(--foam);border-color:transparent}
+html.v3 input:focus,html.v3 select:focus,html.v3 textarea:focus{background:var(--card);border-color:var(--sea)}
+html.v3 #dock{left:max(14px,calc(50% - 220px));right:max(14px,calc(50% - 220px));border-radius:999px}
+html.v3 #dock button{flex:1 1 0;flex-direction:row;gap:7px;border-radius:999px;min-height:52px;transition:flex-grow .3s cubic-bezier(.2,.8,.2,1),background .2s,color .2s}
+html.v3 #dock button em{display:none}html.v3 #dock button.on{flex-grow:2.6;transform:none}html.v3 #dock button.on em{display:inline;font-size:12px}
+html.v3 .sheet{border-radius:32px 32px 0 0;animation:v2sheet .42s cubic-bezier(.16,1,.3,1) backwards}
+html.v3 .sheet::before{content:"";display:block;width:44px;height:5px;border-radius:9px;background:var(--line);margin:-6px auto 14px}
+html.v3 .tc{position:relative;overflow:hidden;color:#fff;border-radius:28px;padding:20px;margin-bottom:16px;background:linear-gradient(135deg,#0d2b3e 0,#0f5f6e 62%,#14909f 100%);box-shadow:0 24px 46px -24px rgba(13,43,62,.75)}
+html.v3 .tc::after{content:"";position:absolute;right:-50px;top:-50px;width:170px;height:170px;border-radius:50%;background:radial-gradient(circle,rgba(242,163,58,.5),transparent 70%);pointer-events:none}
+html.v3 .tc small{opacity:.75}html.v3 .tc b{font-family:'Bricolage Grotesque','Figtree',sans-serif}
+html.v3 .tc.pre{display:flex;align-items:center;gap:18px}html.v3 .tc-big{display:flex;flex-direction:column;align-items:center;min-width:96px}
+html.v3 .tc-big b{font-size:58px;font-weight:800;line-height:1;letter-spacing:-.04em}html.v3 .tc-big span{font-weight:600;opacity:.85}html.v3 .tc-r b{display:block;font-size:22px;letter-spacing:-.02em}
+html.v3 .tc-now{display:flex;gap:12px;align-items:center;margin:10px 0 12px}html.v3 .tc-now b{display:block;font-size:22px;letter-spacing:-.02em}
+html.v3 .tc-now i{width:12px;height:12px;border-radius:50%;background:#3ddc97;flex:none;animation:v3pulse 1.6s infinite}
+html.v3 .tc-next{background:rgba(255,255,255,.13);border-radius:18px;padding:12px 14px;display:grid;gap:2px}html.v3 .tc-next b{font-size:17px}html.v3 .tc-next span{color:var(--sun);font-weight:700}
+html.v3 .tc-btn{margin-top:12px;background:rgba(255,255,255,.18);color:#fff;border:0;border-radius:999px;padding:10px 18px;font-weight:700}
+html.v3 .tc.post{text-align:center}html.v3 .tc.post b{display:block;font-size:22px}
+html.v3 .rdy-h{display:flex;align-items:center;gap:16px}html.v3 .rdy-ring{width:76px;height:76px;flex:none}
+html.v3 .rdy-ring circle{fill:none;stroke-width:8;stroke-linecap:round}html.v3 .rdy-ring .rb{stroke:var(--line)}
+html.v3 .rdy-ring .rf{stroke:var(--sea);transform:rotate(-90deg);transform-origin:38px 38px;stroke-dashoffset:var(--off);animation:v3ring 1s .1s cubic-bezier(.2,.8,.2,1) both}
+@keyframes v3ring{from{stroke-dashoffset:188.5}}
+html.v3 .rdy-ring text{fill:var(--ink);font:800 17px 'Bricolage Grotesque','Figtree',sans-serif}
+html.v3 .rdy ul{list-style:none;padding:0;margin:14px 0 0;display:grid;gap:11px}html.v3 .rdy li{display:flex;align-items:center;gap:12px}
+html.v3 .rdy li i{width:24px;height:24px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:13px;font-style:normal;flex:none;color:#fff}
+html.v3 .rdy li.ok i{background:var(--ok);border-color:var(--ok)}html.v3 .rdy li small{margin-left:auto;color:var(--mut);font-weight:600}
+html.v3 .pack{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+html.v3 .pack button{border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:8px 14px;font-weight:600;font-size:13.5px;transition:transform .12s,background .2s}
+html.v3 .pack button:active{transform:scale(.95)}html.v3 .pack button.on{background:var(--foam);border-color:var(--ok);color:var(--ok)}html.v3 .pack button.on::before{content:"✓ "}
+html.v3 .cmd h3{font-family:'Bricolage Grotesque','Figtree',sans-serif;font-size:24px;letter-spacing:-.03em;margin:6px 0 12px}
+html.v3 .cmd-g{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}
+html.v3 .cmd-t{border:0;text-align:left;border-radius:26px;padding:16px;background:var(--card);color:var(--ink);display:grid;gap:4px;box-shadow:0 2px 4px rgba(13,43,62,.04),0 22px 44px -30px rgba(13,43,62,.45);transition:transform .12s}
+html.v3[data-theme=dark] .cmd-t{background:linear-gradient(180deg,#17344c,#12293a);box-shadow:inset 0 1px 0 rgba(255,255,255,.07)}
+html.v3 .cmd-t:active{transform:scale(.96)}html.v3 .cmd-t svg{width:26px;height:26px;color:var(--sea);margin-bottom:6px}
+html.v3 .cmd-t b{font:800 26px 'Bricolage Grotesque','Figtree',sans-serif;letter-spacing:-.03em}html.v3 .cmd-t span{color:var(--mut);font-weight:600;font-size:13px}
+html.nomo .tc-now i,html.nomo .rdy-ring .rf{animation:none!important}
+</style>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="logo" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#0d2b3e"/><g><path d="M32 8c-8.6 0-15.5 6.6-15.5 14.8C16.5 32.8 32 46 32 46s15.5-13.2 15.5-23.2C47.5 14.6 40.6 8 32 8z" fill="#f2a33a"/><circle cx="32" cy="23" r="5.8" fill="#0d2b3e"/></g><g><path d="M10 53q5.5-4.5 11 0t11 0 11 0 11 0" stroke="#3fb5c2" stroke-width="3.5" fill="none" stroke-linecap="round"/></g><g><path d="M10 59q5.5-4.5 11 0t11 0 11 0 11 0" stroke="#0f7c8a" stroke-width="3.5" fill="none" stroke-linecap="round"/></g></symbol></svg>
@@ -788,7 +835,14 @@ function rcptPdfBlob(pay,p){
 }
 function rcptFileName(pay,p){return 'Receipt-'+String(p.name||'student').replace(/[^\w]+/g,'-').replace(/^-+|-+$/g,'').slice(0,30)+'-'+rcptNo(pay)+'.pdf'}
 function savePdfBlob(blob,name){const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000)}
+function rcptTwoStep(pay,p){ // WhatsApp links can open a chat but cannot attach a file; the share menu can attach a file but cannot choose a chat. So: step 1 opens the chat, step 2 shares the PDF.
+ const first=String(p.name||'').trim().split(/\s+/)[0]||'the student';
+ sheet(`<h3>Send receipt to ${esc(first)}</h3><p class="mut" style="margin-bottom:14px">WhatsApp can open the chat (${esc(p.phone)}) with the message ready, but it cannot attach a file by itself. So it takes two taps:</p><div class="row" style="flex-direction:column;gap:10px"><button class="pri" id="rs1">1. Open chat with the message</button><button class="ghost" id="rs2">2. Send the PDF</button></div><p class="mut" style="margin:12px 0">For step 2, choose ${esc(first)} at the top of the WhatsApp list (the chat you just opened).</p><div class="row"><button class="ghost" data-close>Done</button></div>`);
+ $('#rs1').onclick=()=>{wa(p,rcptMsg(pay,p));$('#rs1').textContent='1. Chat opened ✓';$('#rs1').className='ghost';$('#rs2').className='pri'};
+ $('#rs2').onclick=()=>rcptShare(pay,p,false);
+}
 async function rcptShare(pay,p,withMsg){
+ if(withMsg&&p.phone){rcptTwoStep(pay,p);return}
  let blob,name;try{blob=rcptPdfBlob(pay,p);name=rcptFileName(pay,p)}catch(e){toast('Could not create the PDF','err');return}
  const file=new File([blob],name,{type:'application/pdf'}),data={files:[file],title:'Payment receipt'};if(withMsg)data.text=rcptMsg(pay,p);
  try{if(navigator.canShare&&navigator.canShare(data)){await navigator.share(data);return}}catch(e){if(e&&e.name==='AbortError')return}
@@ -967,6 +1021,39 @@ function v2fx(){ // numbers count up once when a page opens (never on background
   const step=now=>{if(!el.isConnected)return;const q=Math.min(1,(now-t0)/dur),v=to*(1-Math.pow(1-q,3));el.textContent=q>=1?t:m[1]+v.toLocaleString('en-IN',{minimumFractionDigits:dec,maximumFractionDigits:dec})+m[3];if(q<1)requestAnimationFrame(step)};
   requestAnimationFrame(step)});
 }
+/* ---------- Voyage look (preview): live trip card, readiness, command centre, gestures ---------- */
+const V3=()=>document.documentElement.classList.contains('v3');
+const nowD=()=>{try{const o=localStorage.getItem('iv-now');return o?new Date(o):new Date()}catch(e){return new Date()}};
+const dkey=d=>new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+const mins=t=>{const m=/^(\d{1,2}):(\d{2})$/.exec(t||'');return m?+m[1]*60+ +m[2]:null};
+const human=m=>m<60?m+' min':Math.floor(m/60)+' h'+(m%60?' '+(m%60)+' min':'');
+function tripLive(){const c=cfg(),st=c.start,en=c.end||c.start;if(!st)return null;const n=nowD(),t=dkey(n),dd=(a,b)=>Math.round((new Date(a+'T00:00')-new Date(b+'T00:00'))/864e5);
+ if(t<st)return{k:'pre',n:dd(st,t)};if(t>en)return{k:'post'};
+ const list=((S.d&&S.d.stops)||[]).filter(x=>x.date===t&&mins(x.time)!=null).sort((a,b)=>mins(a.time)-mins(b.time)),cur=n.getHours()*60+n.getMinutes();
+ let now=null,next=null;list.forEach(x=>{if(mins(x.time)<=cur)now=x;else if(!next)next=x});
+ return{k:'live',day:dd(t,st)+1,of:dd(en,st)+1,now,next,m:next?mins(next.time)-cur:0}}
+function tripCard(){const L=tripLive(),c=cfg();if(!L)return'';const dest=(String(c.route||'').split(/\s+to\s+/i).pop()||'the trip').trim();
+ if(L.k==='pre')return`<div class="tc pre"><div class="tc-big"><b>${L.n}</b><span>${L.n===1?'day':'days'} to go</span></div><div class="tc-r"><b>${esc(dest)}</b><small>${esc(rcptNice(c.start))}${c.end&&c.end!==c.start?' to '+esc(rcptNice(c.end)):''}</small></div></div>`;
+ if(L.k==='post')return`<div class="tc post"><b>Trip complete</b><small>Thank you for being part of ${esc(c.trip||'the trip')}.</small></div>`;
+ return`<div class="tc live"><small>DAY ${L.day} OF ${L.of} · ${esc(dest)}</small><div class="tc-now"><i></i><div><small>Now</small><b>${L.now?esc(L.now.title):'Free time'}</b></div></div>${L.next?`<div class="tc-next"><small>Next · ${esc(fmtT(L.next.time))}</small><b>${esc(L.next.title)}</b><span>in ${human(L.m)}</span></div>`:'<div class="tc-next"><small>Next</small><b>Nothing more planned today</b></div>'}<button type="button" class="tc-btn" data-go="trip">Full itinerary</button></div>`}
+setInterval(()=>{if(!V3()||!S.u||document.visibilityState!=='visible'||(S.page!=='me'&&S.page!=='dash'))return;const e=document.querySelector('#view .tc'),h=tripCard();if(e&&h&&e.outerHTML!==h)e.outerHTML=h},30000);
+const PACK=['ID card','Water bottle','Your medicines','Charger + power bank','Some cash + UPI','Comfortable shoes','Sunscreen + cap','Clothes for 4 days'];
+const packKey=()=>'ivPack:'+((S.u&&S.u.username)||'');
+const packGet=()=>{try{const a=JSON.parse(localStorage.getItem(packKey())||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}};
+function readyCard(){const d=S.d,p=d.me,a=d.alloc,f=feeOf(p),due=Math.max(f-paidBy(p.id),0),pk=packGet(),np=PACK.filter((_,i)=>pk[i]).length;
+ const it=[['Fee paid',f>0&&due<=0,due>0?inr(due)+' left':'Done'],['Your details',!!(p.phone&&p.guardianName&&p.guardianPhone&&p.bloodGroup),p.phone&&p.guardianName&&p.guardianPhone&&p.bloodGroup?'Done':'Incomplete']];
+ if(a){it.push(['Parent consent form',!!a.consent,a.consent?'Received':'Pending']);it.push(['Bus + room allotted',!!(a.bus&&a.room),a.bus&&a.room?'Done':'Waiting']);}
+ it.push(['Packing',np===PACK.length,np+' of '+PACK.length]);
+ const dn=it.filter(x=>x[1]).length,pct=Math.round(dn/it.length*100),R=2*Math.PI*30,off=(R*(1-pct/100)).toFixed(1);
+ return`<div class="card rdy" id="rdy"><div class="rdy-h"><svg class="rdy-ring" viewBox="0 0 76 76" role="img" aria-label="${pct}% ready"><circle class="rb" cx="38" cy="38" r="30"/><circle class="rf" cx="38" cy="38" r="30" style="stroke-dasharray:${R.toFixed(1)};--off:${off}"/><text x="38" y="43" text-anchor="middle">${dn}/${it.length}</text></svg><div><h3 style="margin:0">Trip readiness</h3><small class="mut">${dn===it.length?'All set. Have a great trip!':'Finish these before we leave'}</small></div></div><ul>${it.map(x=>`<li class="${x[1]?'ok':''}"><i>${x[1]?'✓':''}</i><span>${x[0]}</span><small>${esc(x[2])}</small></li>`).join('')}</ul><div class="pack">${PACK.map((x,i)=>`<button type="button" class="${pk[i]?'on':''}" data-act="pack-toggle" data-id="${i}">${esc(x)}</button>`).join('')}</div></div>`}
+function cmdHTML(){const d=S.d,pend=(d.claims||[]).filter(c=>c.status==='Pending').length,h=nowD().getHours(),g=h<12?'Good morning':h<17?'Good afternoon':'Good evening',ok=k=>navList().some(x=>x[0]===k),fn=String(S.u.name||'').split(' ')[0];
+ const T=[ok('claims')&&['go','claims',icon('claims'),pend,'to verify'],ok('attend')&&['go','attend',icon('attend'),'Roll','call'],['act','emerg','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.5"/></svg>','Emergency','info'],ok('ppl')&&['go','ppl',icon('ppl'),'People','&amp; payments']].filter(Boolean);
+ return`${tripCard()}<div class="cmd"><h3>${g}, ${esc(fn)}</h3><div class="cmd-g">${T.map(t=>`<button type="button" class="cmd-t" data-${t[0]==='go'?'go':'act'}="${t[1]}">${t[2]}<b>${t[3]}</b><span>${t[4]}</span></button>`).join('')}</div></div>`}
+(function(){let y0=0,dy=0,sh=null;const M=document.getElementById('modal');
+ M.addEventListener('touchstart',e=>{sh=null;if(!V3()||S.lock)return;const s=e.target.closest('.sheet');if(!s)return;y0=e.touches[0].clientY;dy=0;if(y0-s.getBoundingClientRect().top<=72&&s.scrollTop<=0)sh=s},{passive:true});
+ M.addEventListener('touchmove',e=>{if(!sh)return;dy=Math.max(0,e.touches[0].clientY-y0);sh.style.transition='none';sh.style.transform='translateY('+dy+'px)'},{passive:true});
+ M.addEventListener('touchend',()=>{if(!sh)return;const s=sh;sh=null;s.style.transition='transform .22s';if(dy>110){s.style.transform='translateY(100%)';setTimeout(()=>{close();s.style.transform='';s.style.transition=''},170)}else{s.style.transform='';setTimeout(()=>s.style.transition='',230)}});
+ document.addEventListener('click',e=>{if(V3()&&!document.documentElement.classList.contains('nomo')&&e.target.closest&&e.target.closest('button,[data-act],[data-go]'))try{navigator.vibrate&&navigator.vibrate(6)}catch(x){}},true)})();
 const VIEWS={
 attend(){
  if(S.roll){const r=rollOf(S.roll);if(r)return rollView(r);S.roll=''}
@@ -988,7 +1075,7 @@ dash(){
  const left=col-spent,paid=P.filter(p=>status(p)[0]==='Paid').length;
  const A=P.filter(p=>p.status!=='Cancelled'),stu=A.filter(p=>p.type==='Student').length,fac=A.length-stu,n=A.length||1,planned=Object.values(budget()).reduce((a,b)=>a+Number(b||0),0),mg=planned>0?(exp-planned)/n:(exp-spent)/n;
  const recent=[...d.payments.map(x=>({d:x.date,t:x.kind==='refund'?'out':'in',s:pName(x.participantId)+(x.kind==='refund'?' (refund)':''),a:x.amount,w:accName(x.account)})),...d.expenses.map(x=>({d:x.date,t:'out',s:x.payee+' · '+x.category,a:x.amount,w:accName(x.account)}))].sort((a,b)=>b.d.localeCompare(a.d)).slice(0,7);
- return{title:'Overview',actions:`<button class="ghost" data-act="print-sum">Print summary</button><button class="ghost" data-act="final-rep">Final report</button>${can(1)?'<button class="ghost" data-act="remind-list">Remind unpaid</button>':''}`,html:`${pendCard()}
+ return{title:'Overview',actions:`<button class="ghost" data-act="print-sum">Print summary</button><button class="ghost" data-act="final-rep">Final report</button>${can(1)?'<button class="ghost" data-act="remind-list">Remind unpaid</button>':''}`,html:`${V3()?cmdHTML():''}${pendCard()}
  <div class="kpis">
   <div class="kpi"><small>Collected</small><div class="num">${inr(col)}</div><em>of ${inr(exp)} expected</em></div>
   <div class="kpi"><small>Still to collect</small><div class="num">${inr(Math.max(exp-col,0))}</div><em>${A.length-paid} of ${A.length} not fully paid</em></div>
@@ -1048,7 +1135,7 @@ claims(){const c=[...(S.d.claims||[])].sort((a,b)=>(a.status==='Pending'?0:1)-(b
 me(){const d=S.d,p=d.me,c=d.config,f=feeOf(p),x=paidBy(p.id),due=Math.max(f-x,0),pend=d.claims.filter(k=>k.status==='Pending').reduce((a,k)=>a+Number(k.amount),0);
  const pay=!c.upiId?'<p class="mut">Online payment is not set up yet. Please ask the organiser.</p>':due<=0?'<p style="color:var(--ok);font-weight:700">Fully paid. Thank you!</p>':`<div class="tools" style="margin-bottom:6px"><input id="pa" type="number" min="1" max="${due}" step="any" inputmode="decimal" value="${due}" style="max-width:170px"><button class="ghost" data-act="pay-full">Pay full ${inr(due)}</button></div><p class="mut" style="margin-bottom:12px">Change the amount to pay only a part now.</p><div class="payw" style="display:flex;gap:18px;flex-wrap:wrap;align-items:center"><div class="qrw"><div id="qr" style="background:#fff;padding:8px;border:1px solid var(--line);border-radius:10px;min-width:60px;min-height:60px"></div></div><div class="payc" style="display:flex;flex-direction:column;gap:10px"><button class="ghost" data-act="upi-manual">Pay to UPI ID</button><button class="ghost mob" data-act="qr-toggle">Hide QR code</button><small class="mut">Or scan the QR with any UPI app.<br>Paying to ${esc(c.upiName||c.upiId)}<br>App shows a limit error? Use “Pay to UPI ID”.</small></div></div><h3 style="margin:22px 0 8px">After paying</h3><div class="tools"><input id="pr" placeholder="UPI transaction ID" style="max-width:260px"><button class="pri" data-act="claim-send">I have paid</button></div><small class="mut">The organiser verifies it, then it appears in your history as received.</small>`;
  const hist=[...d.payments.map(y=>({d:y.date,a:(y.kind==='refund'?'Refund −':'')+inr(y.amount),s:'Received',k:'c-ok',id:y.kind==='refund'?'':y.id})),...d.claims.filter(k=>k.status!=='Approved').map(k=>({d:k.date,a:inr(k.amount),s:k.status,k:k.status==='Rejected'?'c-no':'c-part'}))].sort((a,b)=>String(b.d).localeCompare(String(a.d)));
- return{title:'My payments',actions:'<button class="ghost" data-act="refresh">Refresh</button>',html:`${V2()?'':pinCard()+allocCard()}${(()=>{const pct=f>0?Math.max(0,Math.min(100,Math.round(x/f*100))):0,dd=c.dueDate,late=dd&&dd<today();if(V2())return heroHTML(pct,x,f,due,dd,late,c);return`<div class="card" style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><b>${pct}% paid</b><span class="mut">${inr(x)} of ${inr(f)}</span></div><div style="height:12px;border-radius:99px;background:#e5edf0;margin:10px 0;overflow:hidden"><i style="display:block;height:100%;width:${pct}%;background:${due>0?'#f2a33a':'#1b9a62'}"></i></div>${due>0?`<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span>Balance <b>${inr(due)}</b>${dd?` · due by <b style="color:${late?'var(--bad)':'inherit'}">${esc(rcptNice(dd))}${late?' (overdue)':''}</b>`:''}</span>${c.upiId?'<button class="pri" data-act="pay-scroll">Pay now</button>':''}</div>`:'<b style="color:var(--ok)">Fully paid ✓</b>'}</div>`})()}${V2()?pinCard()+allocCard():''}<div class="kpis k3"><div class="kpi"><small>Your fee</small><div class="num">${inr(f)}</div></div><div class="kpi"><small>Paid</small><div class="num">${inr(x)}</div>${pend?`<em>${inr(pend)} awaiting verification</em>`:''}</div><div class="kpi"><small>Balance</small><div class="num" style="color:${due>0?'var(--bad)':'var(--ok)'}">${inr(due)}</div></div></div>
+ return{title:'My payments',actions:'<button class="ghost" data-act="refresh">Refresh</button>',html:`${V3()?tripCard():''}${V2()?'':pinCard()+allocCard()}${(()=>{const pct=f>0?Math.max(0,Math.min(100,Math.round(x/f*100))):0,dd=c.dueDate,late=dd&&dd<today();if(V2())return heroHTML(pct,x,f,due,dd,late,c);return`<div class="card" style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><b>${pct}% paid</b><span class="mut">${inr(x)} of ${inr(f)}</span></div><div style="height:12px;border-radius:99px;background:#e5edf0;margin:10px 0;overflow:hidden"><i style="display:block;height:100%;width:${pct}%;background:${due>0?'#f2a33a':'#1b9a62'}"></i></div>${due>0?`<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span>Balance <b>${inr(due)}</b>${dd?` · due by <b style="color:${late?'var(--bad)':'inherit'}">${esc(rcptNice(dd))}${late?' (overdue)':''}</b>`:''}</span>${c.upiId?'<button class="pri" data-act="pay-scroll">Pay now</button>':''}</div>`:'<b style="color:var(--ok)">Fully paid ✓</b>'}</div>`})()}${V3()?readyCard():''}${V2()?pinCard()+allocCard():''}<div class="kpis k3"><div class="kpi"><small>Your fee</small><div class="num">${inr(f)}</div></div><div class="kpi"><small>Paid</small><div class="num">${inr(x)}</div>${pend?`<em>${inr(pend)} awaiting verification</em>`:''}</div><div class="kpi"><small>Balance</small><div class="num" style="color:${due>0?'var(--bad)':'var(--ok)'}">${inr(due)}</div></div></div>
  ${d.breakup.length?`<div class="card" style="margin-bottom:16px"><h3>Where your ${inr(f)} goes</h3>${d.breakup.map(b=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #edf2f5"><span>${esc(b.c)}</span><b>${inr(b.a)}</b></div>`).join('')}<small class="mut" style="display:block;margin-top:8px">Approximate split of your fee across trip costs.</small></div>`:''}
  <div class="card" id="paycard" style="margin-bottom:16px"><h3>Pay now</h3>${pay}</div>
  <div class="card"><h3>History</h3>${hist.map(r=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-top:1px solid #edf2f5"><span>${r.d}</span><span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end"><b>${r.a}</b> <span class="chip ${r.k}">${r.s}</span>${r.id?`<button class="ghost" style="padding:3px 12px;font-size:12.5px;min-height:34px" data-act="rcpt" data-id="${r.id}">Receipt</button>`:''}</span></div>`).join('')||'<p class="mut">No payments yet.</p>'}</div>`}},
@@ -1082,6 +1169,7 @@ function expForm(v){
  form(v.id?'Edit expense':'Add expense',[{l:'Paid to (agency / vendor)',k:'payee',r:1},{l:'Category',k:'category',t:'select',o:cats().map(c=>[c,c])},{l:'Amount (₹)',k:'amount',t:'number',r:1},{l:'Date',k:'date',t:'date',r:1},{l:'Paid from account',k:'account',t:'select',o:accOpts()},{l:'Note / bill number',k:'note',t:'textarea'}],v,r=>saveRec('Expenses',{...v,...r}),{del:v.id&&can(2)?delRec('Expenses',v.id):null});
 }
 const ACT={
+ 'pack-toggle':i=>{const a=packGet();a[i]=!a[i];try{localStorage.setItem(packKey(),JSON.stringify(a))}catch(e){}const e=$('#rdy');if(e)e.outerHTML=readyCard()},
  'add-roll':()=>{if(!can(1))return;const bs=[...new Set(S.d.participants.filter(p=>p.status!=='Cancelled').map(p=>String(p.bus||'').trim()).filter(Boolean))].sort();form('New roll call',[{l:'Title',k:'title',r:1,p:'e.g. Bus 1: leaving Ernakulam'},{l:'Who',k:'scope',t:'select',o:[['','Everyone'],...bs.map(b=>['bus:'+b,b+' only'])]}],{scope:''},r=>saveRec('Rolls',r))},
  'roll-open':id=>{S.roll=id;S.q='';S.f='';draw();scrollTo(0,0)},
  'roll-back':()=>{S.roll='';S.q='';S.f='';draw();scrollTo(0,0)},
@@ -1186,7 +1274,7 @@ const ACT={
    async r=>{const res=await api('decideAll',{ids,account:r.account});await load();if(res.skipped)setTimeout(()=>toast(res.skipped+' not approved (already handled, or no account linked to that UPI ID)','info'),900)},{msg:'All payments approved'})},
  'final-rep':()=>sheet(`<h3>Final report</h3><p class="mut" style="margin-bottom:14px">Summary, accounts, spending, expenses and everyone's fee status, ready to print for the school.</p><div class="row" style="flex-direction:column"><button class="pri" data-act="final-pdf">Save / Share PDF</button><button class="ghost" data-act="final-csv">Download CSV</button><button class="ghost" data-act="backup">Download full backup</button><button class="ghost" data-close>Close</button></div>`),
  'look':()=>{const P=window.IVLOOK||{},b=(k,v,t)=>`<button class="ghost ${P[k]===v||(k==='f'&&!P.f&&v==='n')||(k==='v'&&!P.v&&v==='2')||(k==='m'&&!P.m&&v==='on')?'on':''}" data-lk="${k}" data-lv="${v}">${t}</button>`;
-  sheet(`<h3>Appearance</h3><div class="ob-q" style="font-weight:700;margin-bottom:8px">Theme</div><div class="lookrow">${b('t','auto','Auto')}${b('t','light','Light')}${b('t','dark','Dark')}</div><div class="ob-q" style="font-weight:700;margin-bottom:8px">Text size</div><div class="lookrow">${b('f','n','Normal')}${b('f','lg','Large')}${b('f','xl','Extra large')}</div><div class="ob-q" style="font-weight:700;margin-bottom:8px">Style</div><div class="lookrow">${b('v','2','New look')}${b('v','1','Classic')}</div><div class="ob-q" style="font-weight:700;margin-bottom:8px">Animations</div><div class="lookrow">${b('m','on','On')}${b('m','off','Off')}</div><p class="mut" style="margin-bottom:14px">Saved on this device only.</p><div class="row"><button class="pri" data-close>Done</button></div>`);
+  sheet(`<h3>Appearance</h3><div class="ob-q" style="font-weight:700;margin-bottom:8px">Theme</div><div class="lookrow">${b('t','auto','Auto')}${b('t','light','Light')}${b('t','dark','Dark')}</div><div class="ob-q" style="font-weight:700;margin-bottom:8px">Text size</div><div class="lookrow">${b('f','n','Normal')}${b('f','lg','Large')}${b('f','xl','Extra large')}</div><div class="ob-q" style="font-weight:700;margin-bottom:8px">Style</div><div class="lookrow">${b('v','3','Voyage (preview)')}${b('v','2','New look')}${b('v','1','Classic')}</div><div class="ob-q" style="font-weight:700;margin-bottom:8px">Animations</div><div class="lookrow">${b('m','on','On')}${b('m','off','Off')}</div><p class="mut" style="margin-bottom:14px">Saved on this device only.</p><div class="row"><button class="pri" data-close>Done</button></div>`);
   document.querySelectorAll('[data-lk]').forEach(x=>x.onclick=()=>{ivSet(x.dataset.lk,x.dataset.lv);document.querySelectorAll('[data-lk="'+x.dataset.lk+'"]').forEach(y=>y.classList.toggle('on',y===x))})},
  'print-sum':()=>{if(window.matchMedia&&matchMedia('(max-width:860px)').matches||/Android|iPhone|iPad|iPod/i.test(navigator.userAgent))ACT['final-rep']();else print()},
  'final-pdf':()=>{close();setTimeout(()=>{try{outFile(reportPdfBlob(),'Final-accounts-'+today()+'.pdf')}catch(e){toast('Could not create the PDF','err')}},250)},
